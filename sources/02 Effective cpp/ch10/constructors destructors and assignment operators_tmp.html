@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>constructors destructors and assignment operators.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="%E6%9E%84%E9%80%A0%E6%9E%90%E6%9E%84%E8%B5%8B%E5%80%BC%E8%BF%90%E7%AE%97">构造/析构/赋值运算</h1>
+<h2 id="%E6%9D%A1%E6%AC%BE05-%E4%BA%86%E8%A7%A3-c-%E9%BB%98%E9%BB%98%E7%BC%96%E5%86%99%E5%B9%B6%E8%B0%83%E7%94%A8%E5%93%AA%E4%BA%9B%E5%87%BD%E6%95%B0">条款05: 了解 c++ 默默编写并调用哪些函数</h2>
+<hr>
+<ul>
+<li>编译器可以暗自为 class 创建 default 构造函数、copy 构造函数、copy assignment 操作符 以及 析构函数。</li>
+</ul>
+<hr>
+<p>即使你写了一个空类，编译器仍然会为它声明一些方法：</p>
+<pre class="hljs"><code><div><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Empty</span> {</span>};
+<span class="hljs-comment">// 等价于</span>
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Empty</span> {</span>
+<span class="hljs-keyword">public</span>:
+    Empty() {}
+    Empty(<span class="hljs-keyword">const</span> Empty&amp; rhs) {}
+    ~Empty() {}
+
+    Empty&amp; <span class="hljs-keyword">operator</span>=(<span class="hljs-keyword">const</span> Empty&amp; rhs) {}
+};
+</div></code></pre>
+<p>编译器创建的这些函数中 default constructor/destructor 主要用来给编译器用来防止 “幕后” 代码，例如调用 base
+classes 和 non-static 成员变量的构造函数和析构函数。</p>
+<p>至于 copy 构造函数 和 copy assignment 操作符，编译器创建的版本只是简单的将每一个 non-static 成员变量拷贝到
+目标对象。</p>
+<p>当编译器无法产生合适的 copy assignment 时，它会放弃产生。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">template</span> &lt;<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">T</span>&gt;
+<span class="hljs-title">class</span> <span class="hljs-title">NamedObject</span> {</span>
+<span class="hljs-keyword">public</span>:
+    NameObject(<span class="hljs-built_in">std</span>::<span class="hljs-built_in">string</span>&amp; name, <span class="hljs-keyword">const</span> T&amp; value);
+<span class="hljs-keyword">private</span>:
+    <span class="hljs-built_in">std</span>::<span class="hljs-built_in">string</span>&amp; nameValue;
+    <span class="hljs-keyword">const</span> T objecteValue;
+};
+</div></code></pre>
+<p>显然上面这个类无法生成 copy assignment，因为 nameValue 是一个 reference，而 reference 没有办法被重新赋值。</p>
+<pre class="hljs"><code><div><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Base</span> {</span>
+<span class="hljs-keyword">private</span>:
+    Base&amp; <span class="hljs-keyword">operator</span>=(<span class="hljs-keyword">const</span> Empty&amp; rhs){}
+};
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Derive</span> :</span> <span class="hljs-keyword">public</span> Base { }
+</div></code></pre>
+<p>上面的 Derive 类也不会产生 copy assignment，因为 base class 将 operator= 设置为了 private，因此并不可以
+使用赋值的方式处理 Base 对象，也就无法正确处理 Derive。</p>
+<h2 id="%E6%9D%A1%E6%AC%BE06-%E8%8B%A5%E4%B8%8D%E6%83%B3%E4%BD%BF%E7%94%A8%E7%BC%96%E8%AF%91%E5%99%A8%E8%87%AA%E5%8A%A8%E7%94%9F%E6%88%90%E7%9A%84%E5%87%BD%E6%95%B0%E5%B0%B1%E8%AF%A5%E6%98%8E%E7%A1%AE%E6%8B%92%E7%BB%9D">条款06: 若不想使用编译器自动生成的函数，就该明确拒绝</h2>
+<hr>
+<ul>
+<li>为驳回编译器自动提供的机能，可以将相应的成员函数声明为 private 并且不予实现。使用像 Uncopyable 这样的 base class 也是一种方法。</li>
+</ul>
+<hr>
+<p>有时候，我们不希望某些编译器自动生成的函数，那么我们就需要用某种方法拒绝这些函数的生成与调用。</p>
+<p>对于 default constructor，只需要自行编写其他 constructor 就会避免其被调用。</p>
+<p>对于 copy constructor/assignment 则不一样，可以使用 private 来限制其调用。</p>
+<pre class="hljs"><code><div><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">HomeForSale</span> {</span>
+<span class="hljs-keyword">private</span>:
+    HomeForSale(<span class="hljs-keyword">const</span> HomeForSale&amp;);
+    HomeForSale&amp; <span class="hljs-keyword">operator</span>=(<span class="hljs-keyword">const</span> HomeForSale&amp;);
+};
+</div></code></pre>
+<p>用这种方式实现 class 可以当客户企图拷贝 HomeForSale 对象，编译器会阻挠他。如果你不慎在 member 函数或者 friend
+函数中这么做，则连接器会发出报错。</p>
+<p>使用继承一个 private copy base class 的方式可以将报错提前至编译期。</p>
+<pre class="hljs"><code><div><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Uncopyable</span> {</span>
+<span class="hljs-keyword">protected</span>:
+    Uncopyable() {}
+    ~Uncopyable() {}
+<span class="hljs-keyword">private</span>:
+    Uncopyable(<span class="hljs-keyword">const</span> Uncopyable&amp;);
+    Uncopyable&amp; <span class="hljs-keyword">operator</span>=(<span class="hljs-keyword">const</span> Uncopyable&amp;);
+};
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">HomeForSale</span> :</span> <span class="hljs-keyword">public</span> Uncopyable {};
+</div></code></pre>
+<p>上面这种实现非常微妙，但是功能强大。除了这种方法，你可以使用(继承) Boost 提供的版本，类名为 noncopyable。</p>
+<h2 id="%E6%9D%A1%E6%AC%BE07-%E4%B8%BA%E5%A4%9A%E6%80%81%E5%9F%BA%E7%B1%BB%E5%A3%B0%E6%98%8E-virtual-%E6%9E%90%E6%9E%84%E5%87%BD%E6%95%B0">条款07: 为多态基类声明 virtual 析构函数</h2>
+<hr>
+<ul>
+<li>polymorphic base classes 应该声明一个 virtual 析构函数。任何拥有 virtual 函数的 class 应该拥有一个 virtual destructor。</li>
+<li>classes 的设计目的如果不是作为 base classes 使用，或不是为了具备多态性，就不该声明 virtual 析构函数。</li>
+</ul>
+<hr>
+<p>在继承体系中，可能出现的一个情况是使用 factory 函数返回一个指向 新生成的 derived class 对象的 base class 指
+针。当需要进行清理，调用 delete 时则需要调用 dervied class 对象的 destructor 函数，否则很容易出现 “局部销毁”
+现象。使用 virtual destructor 能够很好的避免这个问题。</p>
+<pre class="hljs"><code><div><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">TimeKeeper</span> {</span>
+<span class="hljs-keyword">public</span>:
+    TimeKeeper();
+    <span class="hljs-keyword">virtual</span> ~TimeKeeper();
+};
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">AtomicClock</span> :</span> <span class="hljs-keyword">public</span> TimeKeeper {};
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">WaterClock</span> :</span> <span class="hljs-keyword">public</span> TimeKeeper {};
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">WristWatch</span> :</span> <span class="hljs-keyword">public</span> TimeKeeper {};
+
+TimeKeeper* ptk = getTimeKeeper();
+<span class="hljs-keyword">delete</span> ptk;
+</div></code></pre>
+<p>通常 base class 都会使用一个 virtual destructor，同时也可能使用其他 virtual function。而如果一个 class 不
+企图当作 base class，而令其析构函数为 virtual 则是一个馊主意。这主要与 virtual 函数的实现细节有关系，它通过
+vptr 和 vitual table 实现。这会使得对象的存储大小增加，同时也会降低可移植性。</p>
+<p>最后得出的心得是：只有当 class 内含有至少一个 virtual 函数，才为它声明 virtual 析构函数。</p>
+<p>还需要注意的是一些STL中不提供 virtual  的 class，当发生继承关系时要慎重考虑 delete。</p>
+<pre class="hljs"><code><div><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SpecialString</span> :</span> <span class="hljs-keyword">public</span> <span class="hljs-built_in">std</span>::<span class="hljs-built_in">string</span> {};
+SpecialString* pss = <span class="hljs-keyword">new</span> SpecialString(<span class="hljs-string">"Impending Doom"</span>);
+<span class="hljs-built_in">std</span>::<span class="hljs-built_in">string</span>* ps;
+ps = pss;
+<span class="hljs-keyword">delete</span> ps; <span class="hljs-comment">// 错误，因为 string 并不提供 virtual destructor，因此会发生局部销毁而导致资源泄露</span>
+</div></code></pre>
+<p>有时候希望拥有一个抽象 class，这就需要 pure virtual 函数。而有时没有办法找到一个好的 virtual 函数，可以使用
+pure virtual destructor。但是一定要提供一份定义，因为后续继承会调用。</p>
+<pre class="hljs"><code><div><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">AWOV</span> {</span>
+<span class="hljs-keyword">public</span>:
+    <span class="hljs-keyword">virtual</span> ~AWOV() = <span class="hljs-number">0</span>;
+};
+
+AWOV::~AWOV() {}
+</div></code></pre>
+<p>最后仍要强调 “virtual 析构函数” 只适用于带多态性质的 base classes 身上，如果没有多态性质，该操作只会徒增成本。</p>
+<h2 id="%E6%9D%A1%E6%AC%BE08-%E5%88%AB%E8%AE%A9%E5%BC%82%E5%B8%B8%E9%80%83%E7%A6%BB%E6%9E%90%E6%9E%84%E5%87%BD%E6%95%B0">条款08: 别让异常逃离析构函数</h2>
+<pre class="hljs"><code><div><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Widget</span> {</span>
+<span class="hljs-keyword">public</span>:
+    ~Widget();
+};
+
+<span class="hljs-keyword">void</span> doSomething {
+    <span class="hljs-built_in">std</span>::<span class="hljs-built_in">vector</span>&lt;Widget&gt; v;
+}
+</div></code></pre>
+<p>上述代码中，在 doSomething 的结尾 vector v 会被销毁，它有责任销毁其中的所有 Widget。而销毁过程中，如果产生
+两个异常，则程序会自动停止。</p>
+<p>因此最佳方法是在 destructor 中就处理异常，并且避免在 catch 子句中产生新的异常，或者可以完全不做多余处理。</p>
+<pre class="hljs"><code><div><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">DBConnection</span> {</span>
+<span class="hljs-keyword">public</span>:
+    <span class="hljs-function"><span class="hljs-keyword">static</span> DBConnection <span class="hljs-title">create</span><span class="hljs-params">()</span></span>;
+    <span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">close</span><span class="hljs-params">()</span></span>;
+};
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">DBConn</span> {</span>
+<span class="hljs-keyword">public</span>:
+    ~DBConn() {
+        <span class="hljs-keyword">try</span> {
+            db.close();
+        } <span class="hljs-keyword">catch</span> (...) {}
+    }
+<span class="hljs-keyword">private</span>:
+    DBConnection db;
+};
+</div></code></pre>
+<h2 id="%E6%9D%A1%E6%AC%BE09-%E7%BB%9D%E4%B8%8D%E5%86%8D%E6%9E%84%E9%80%A0%E5%92%8C%E6%9E%90%E6%9E%84%E8%BF%87%E7%A8%8B%E4%B8%AD%E8%B0%83%E7%94%A8-virtual-%E5%87%BD%E6%95%B0">条款09: 绝不再构造和析构过程中调用 virtual 函数</h2>
+<p>--</p>
+<ul>
+<li>在构造和析构期间不要调用 virtual 函数，因为这类调用从不下降至 derived class
+--</li>
+</ul>
+<pre class="hljs"><code><div><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Transaction</span> {</span>
+<span class="hljs-keyword">public</span>:
+    Transaction();
+    <span class="hljs-function"><span class="hljs-keyword">virtual</span> <span class="hljs-keyword">void</span> <span class="hljs-title">logTransaction</span><span class="hljs-params">()</span> <span class="hljs-keyword">const</span> </span>= <span class="hljs-number">0</span>;
+};
+
+Transaction::Transaction() {
+    logTransaction();
+}
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">BuyTransaction</span> :</span> <span class="hljs-keyword">public</span> Transaction {
+<span class="hljs-keyword">public</span>:
+    <span class="hljs-function"><span class="hljs-keyword">virtual</span> <span class="hljs-keyword">void</span> <span class="hljs-title">logTransaction</span><span class="hljs-params">()</span> <span class="hljs-keyword">const</span></span>;
+}
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SellTransaction</span> :</span> <span class="hljs-keyword">public</span> Transaction {
+<span class="hljs-keyword">public</span>:
+    <span class="hljs-function"><span class="hljs-keyword">virtual</span> <span class="hljs-keyword">void</span> <span class="hljs-title">logTransaction</span><span class="hljs-params">()</span> <span class="hljs-keyword">const</span></span>;
+}
+
+BuyTransaction b;
+</div></code></pre>
+<p>在创建 b 时，会先调用 base class 的 constructor，这也就会先调用 base class 的 virtual logTransaction。不
+止 virtual function 会这样，使用 dynamic_cast 和 typeid 也会产生同样的结果。同时这种情况也出现在析构函数中。</p>
+<p>大多数情况下，编译器会甄别这种错误，但是有时编译器也会失效。当存在大量初始化相同代码时，通常会使用一个 init 函
+数来提取其中重复部分。这就导致了判别失误的情况。</p>
+<pre class="hljs"><code><div><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Transaction</span> {</span>
+<span class="hljs-keyword">public</span>:
+    Transaction() {init();}
+    <span class="hljs-function"><span class="hljs-keyword">virtual</span> <span class="hljs-keyword">void</span> <span class="hljs-title">logTransaction</span><span class="hljs-params">()</span> <span class="hljs-keyword">const</span> </span>= <span class="hljs-number">0</span>;
+
+<span class="hljs-keyword">private</span>:
+    <span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">init</span><span class="hljs-params">()</span> </span>{
+        logTransaction();
+    }
+};
+</div></code></pre>
+<p>上面这种情况，编译器可能并不会发现在 constructor 种调用了 pure virtual 函数，但是这可能导致最终程序崩溃。如
+果是一个在 Transaction 种实现了的 virtual 函数，那么程序会正常执行下去，但是结果与预期不相同。</p>
+<p>不在构造/析构函数中使用 virtual 函数可以避免错误，但是有时候可能希望在对象创建时，调用适当版本的 logTransaction。
+这又该如何呢？可以在 class Transaction 中将 logTransaction 函数改为 non-virtual，并传递必要信息来实现。</p>
+<pre class="hljs"><code><div><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Transaction</span> {</span>
+<span class="hljs-keyword">public</span>:
+    <span class="hljs-function"><span class="hljs-keyword">explicit</span> <span class="hljs-title">Transaction</span><span class="hljs-params">(<span class="hljs-keyword">const</span> <span class="hljs-built_in">std</span>::<span class="hljs-built_in">string</span>&amp; logInfo)</span> </span>{
+        logTransaction(logInfo);
+    }
+    <span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">logTransaction</span><span class="hljs-params">(<span class="hljs-keyword">const</span> strd::<span class="hljs-built_in">string</span>&amp; logInfo)</span> <span class="hljs-keyword">const</span></span>;
+};
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">BuyTransaction</span> :</span> <span class="hljs-keyword">public</span> Transaction {
+<span class="hljs-keyword">public</span>:
+    BuyTransaction(param) : Transaction(createLogString(param)) {}
+<span class="hljs-keyword">private</span>:
+    <span class="hljs-function"><span class="hljs-keyword">static</span> <span class="hljs-built_in">std</span>::<span class="hljs-built_in">string</span> <span class="hljs-title">createLogString</span><span class="hljs-params">(param)</span></span>;
+}
+</div></code></pre>
+<p>通过 string param 来控制 logTransaction 的执行。</p>
+<h2 id="%E6%9D%A1%E6%AC%BE10-%E4%BB%A4-operator-%E8%BF%94%E5%9B%9E%E4%B8%80%E4%B8%AA-referenc-to-this">条款10: 令 operator= 返回一个 referenc to *this</h2>
+<hr>
+<ul>
+<li>令 assignment 操作符返回一个 referenc to *this</li>
+</ul>
+<hr>
+<p>赋值操作需要满足 “连锁赋值” 和 “右结合律” 的特点，因此需要将 =,+=,-=,*=,/=等等操作符返回 reference to *this。</p>
+<pre class="hljs"><code><div><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Widget</span> {</span>
+<span class="hljs-keyword">public</span>:
+    Widget&amp; <span class="hljs-keyword">operator</span>=(<span class="hljs-keyword">const</span> Widget&amp; rhs) {
+        ...
+        <span class="hljs-keyword">return</span> *<span class="hljs-keyword">this</span>;
+    }
+    Widget&amp; <span class="hljs-keyword">operator</span>+=(<span class="hljs-keyword">const</span> Widget&amp; rhs) {
+        ...
+        <span class="hljs-keyword">return</span> *<span class="hljs-keyword">this</span>;
+    }
+}
+
+</div></code></pre>
+<h2 id="%E6%9D%A1%E6%AC%BE11-%E5%9C%A8-operator-%E4%B8%AD%E5%A4%84%E7%90%86%E8%87%AA%E6%88%91%E8%B5%8B%E5%80%BC">条款11: 在 operator= 中处理自我赋值</h2>
+<hr>
+<ul>
+<li>确保当对象自我赋值时 operator= 有良好行为。其中技术包括比较 “来源对象” 和 “目标对象” 地址、精心周到的语句顺序、以及 copy-and-swap。</li>
+<li>确定任何函数如果操作一个以上的对象，而其中多个对象是同一个对象时，其行为仍然正确。</li>
+</ul>
+<hr>
+<p>“自我赋值” 发生在对象被赋值给自己时。以下均是自我赋值的可能情况：</p>
+<pre class="hljs"><code><div>a = a;
+a[i] = a[j]; <span class="hljs-comment">// i == j</span>
+*px = *py; <span class="hljs-comment">// px py 指向同一内存空间</span>
+</div></code></pre>
+<p>有时候当你尝试自行管理资源时，可能会产生 “在停止使用之前以外释放” 的问题。</p>
+<pre class="hljs"><code><div><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Bitmap</span> {</span>};
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Widget</span> {</span>
+<span class="hljs-keyword">public</span>:
+    Widget&amp; <span class="hljs-keyword">operator</span>=(cosnt Widget&amp; rhs) {
+        <span class="hljs-keyword">delete</span> bp;
+        pb = <span class="hljs-keyword">new</span> Bitmap(*rhs.pb);
+        <span class="hljs-keyword">return</span> *<span class="hljs-keyword">this</span>;
+    }
+<span class="hljs-keyword">private</span>:
+    Bitmap* bp; <span class="hljs-comment">// 指向一个从 heap 分配而来的对象。</span>
+};
+</div></code></pre>
+<p>上面这段代码提供了一个非自我赋值安全的 operator=。当执行 delete bp 操作时，如果 rhs 也指向 *this，那么相应
+的 rhs.bp 也被删除，那么后续执行赋值时则会出现异常。</p>
+<h3 id="%E8%AF%81%E5%90%8C%E6%B5%8B%E8%AF%95">证同测试</h3>
+<p>通过证同测试可以避免自我赋值的发生，从而解决该问题。</p>
+<pre class="hljs"><code><div>Widget&amp; Widget::<span class="hljs-keyword">operator</span>=(<span class="hljs-keyword">const</span> Widget&amp; rhs) {
+    <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span> == &amp;rhs) <span class="hljs-keyword">return</span> *<span class="hljs-keyword">this</span>;
+    
+    <span class="hljs-keyword">delete</span> bp;
+    pb = <span class="hljs-keyword">new</span> Bitmap(*rhs.pb);
+    <span class="hljs-keyword">return</span> *<span class="hljs-keyword">this</span>;
+}
+</div></code></pre>
+<h3 id="%E5%BC%82%E5%B8%B8%E5%AE%89%E5%85%A8%E6%80%A7">异常安全性</h3>
+<p>但是上面这个方法不具备 “异常安全性”。通常，如果让 operator= 具备 “异常安全性” 往往自动获得 “自我赋值安全” 的
+回报。</p>
+<pre class="hljs"><code><div>Widget&amp; Widget::<span class="hljs-keyword">operator</span>=(<span class="hljs-keyword">const</span> Widget&amp; rhs) {
+    Bitmap* pOrigin = pb;
+    pb = <span class="hljs-keyword">new</span> Bitmap(*rhs.pb);
+    <span class="hljs-keyword">delete</span> pOrigin;
+    <span class="hljs-keyword">return</span> *<span class="hljs-keyword">this</span>;
+}
+</div></code></pre>
+<p>这种写法，保证了当 new Bitmap 发生异常时，不会删除原有的 pb 内容。同时，又保障了无论如何删除的对象和新建的对
+象是分开的，因此是自我赋值安全的。</p>
+<h3 id="copy-and-swap">copy and swap</h3>
+<p>相较于前面的手工对语句顺序排序，另一个替代方案是使用 copy and swap 技术。</p>
+<pre class="hljs"><code><div><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Widget</span> {</span>
+<span class="hljs-keyword">private</span>:
+    <span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">swap</span><span class="hljs-params">(Widget&amp; rhs)</span></span>; <span class="hljs-comment">// 用于交换 *this 和 rhs 的数据</span>
+};
+
+Widget&amp; Widget::<span class="hljs-keyword">operator</span>=(<span class="hljs-keyword">const</span> Widget&amp; rhs) {
+    Widget tmp(rhs);
+    swap(tmp);
+    <span class="hljs-keyword">return</span> *<span class="hljs-keyword">this</span>;
+}
+</div></code></pre>
+<h2 id="%E6%9D%A1%E6%AC%BE12-%E5%A4%8D%E5%88%B6%E5%AF%B9%E8%B1%A1%E6%97%B6%E5%8B%BF%E5%BF%98%E5%85%B6%E6%AF%8F%E4%B8%80%E4%B8%AA%E6%88%90%E5%88%86">条款12: 复制对象时勿忘其每一个成分</h2>
+<hr>
+<ul>
+<li>Copying 函数应该确保复制“对象内的所有成员变量”以及“所有 base class 成分”。</li>
+<li>不要尝试用某个 copying 函数实现一个 copying 函数。应该将共同技能放进第三个函数中，并由两个 copying 函数共同调用。</li>
+</ul>
+<hr>
+<p>当自行设计 copy constructor 以及 copy assignment 时，编译器可能会无法发现其中的错误。</p>
+<pre class="hljs"><code><div><span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">logCall</span><span class="hljs-params">(<span class="hljs-keyword">const</span> <span class="hljs-built_in">std</span>::<span class="hljs-built_in">string</span>&amp; funcName)</span></span>;
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Customer</span> {</span>
+<span class="hljs-keyword">public</span>:
+    Customer(<span class="hljs-keyword">const</span> Customer&amp; rhs) : name(rhs.name) {
+        logCall(<span class="hljs-string">"..."</span>);
+    }
+    Customer&amp; <span class="hljs-keyword">operator</span>=(<span class="hljs-keyword">const</span> Customer&amp; rhs) {
+        loCall(<span class="hljs-string">"..."</span>);
+        name = rhs.name;
+        <span class="hljs-keyword">return</span> *<span class="hljs-keyword">this</span>;
+    }
+
+<span class="hljs-keyword">private</span>:
+    <span class="hljs-built_in">std</span>::<span class="hljs-built_in">string</span> name;
+};
+</div></code></pre>
+<p>上述代码中看起来完美无瑕，但是当你尝试添加一个新的成员变量时却忘记在 copy constructor/assignment 中添加就会
+导致局部拷贝的发生。不幸的是编译器并不会对此做出提醒。</p>
+<p>如果还存在继承关系，那么就会发生危险。</p>
+<pre class="hljs"><code><div><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">PriorityCustomer</span> :</span> <span class="hljs-keyword">public</span> Customer {
+<span class="hljs-keyword">public</span>:
+    PriorityCustomer(<span class="hljs-keyword">const</span> PriorityCustomer&amp; rhs) : priority(rhs.priority) {
+        logCall(<span class="hljs-string">"***"</span>);
+    }
+    PriorityCustomer&amp; <span class="hljs-keyword">operator</span>=(<span class="hljs-keyword">const</span> PriorityCustomer&amp; rhs) {
+        logCall(<span class="hljs-string">"***"</span>);
+        priority = rhs.priority;
+        <span class="hljs-keyword">return</span> *<span class="hljs-keyword">this</span>;
+    }
+<span class="hljs-keyword">private</span>:
+    <span class="hljs-keyword">int</span> priority;
+};
+</div></code></pre>
+<p>上述代码似乎没有问题，但是却忘记对 Customer 部分进行了复制。而默认则调用了 default constructor，这显然与复制
+操作大相径庭。因此，任何时候当年你主动为 derived class 编写 copy 函数时，就要注意将 base class 成分也要进行
+复制。</p>
+<pre class="hljs"><code><div><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">PriorityCustomer</span> :</span> <span class="hljs-keyword">public</span> Customer {
+<span class="hljs-keyword">public</span>:
+    PriorityCustomer(<span class="hljs-keyword">const</span> PriorityCustomer&amp; rhs) : Customer(rhs), priority(rhs.priority) {
+        logCall(<span class="hljs-string">"***"</span>);
+    }
+    PriorityCustomer&amp; <span class="hljs-keyword">operator</span>=(<span class="hljs-keyword">const</span> PriorityCustomer&amp; rhs) {
+        logCall(<span class="hljs-string">"***"</span>);
+        Customer::<span class="hljs-keyword">operator</span>=(rhs);
+        priority = rhs.priority;
+        <span class="hljs-keyword">return</span> *<span class="hljs-keyword">this</span>;
+    }
+<span class="hljs-keyword">private</span>:
+    <span class="hljs-keyword">int</span> priority;
+};
+</div></code></pre>
+<p>除了上述问题外，还要注意当 copy assignment 和 copy constructor 存在大量相同代码时，最好的操作是提取出一个
+独立函数，并调用。千万不要尝试 assignment 调用 constructor，或者 constructor 调用 assignment。</p>
+
+</body>
+</html>
