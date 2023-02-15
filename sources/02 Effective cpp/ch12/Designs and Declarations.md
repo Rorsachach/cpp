@@ -189,3 +189,150 @@ void printNameAndDisplay(const Window& w) {
 - type 会变化，随着 type 的不断维护更新可能会变得越来越大。
 
 所以 “pass-by-value 并不昂贵” 的唯一对象就是 **内置类型** 和 **STL的迭代器和函数对象**。
+
+## 条款21: 必须返回对象时，别妄想返回其 reference
+
+```cpp
+class Rational {
+public:
+    Rational (int numerator = 0, int denominator = 1);
+
+private:
+    int n, d;
+    friend const Rational operator* (const Rational& lhs, const Rational& rhs);
+};
+```
+
+上述代码中，以 by value 的方式返回计算结果。而上述内容无法修改为返回 reference 因为会出现
+意向不到的问题。
+
+```cpp
+const Rational& operator* (const Rational& lhs, const Rational& rhs) {
+    Rational result (lhs.n * rhs.n, lhs.d * rhs.d);
+    return result;
+}
+```
+
+返回 stack 对象显然是不合理的，因为当脱离当前的 scoop 后，result 被释放，于是返回的 reference 
+指向了被销毁的地方。
+
+```cpp
+const Rational& operator* (const Rational& lhs, const Rational& rhs) {
+    Rational* result = new Rational(lhs.n * rhs.n, lhs.d * rhs.d);
+    return *result;
+}
+```
+
+那么返回一个 heap object 呢？这显然也是不合理的，因为你完全不知道何时去释放掉 new 出来的对
+像，甚至有可能你都无法找到那个生成的对象，例如：
+
+```cpp
+Rational w, x, y, z;
+w = x * y * z; // 连续两次调用，而你无法获取第一次调用产生的指针
+```
+
+那么结果就是，当必须要返回新对象时，直接返回新对象就行了。如果成本过高，编译器会想办法进行优化。
+
+## 条款22: 将成员变量声明为 private
+首先需要了解为什么成员变量不应该是 public 和 protected 的，然后显然易见应当使用 private。
+
+首先从语法的一致性开始。如果成员变量不是 public，客户就需要使用成员函数来访问成员变量。如此
+以来就不再需要区分 成员变量 和 成员函数了，全都按照后者方式访问就行了。
+
+其次，使用函数方式可以更加精确的控制成员变量。而如果成员变量是 public 的，这就意味着任何人都
+有权限随时更改对象的成员变量。
+
+```cpp
+class AccessLevels {
+public:
+    int getReadOnly() const { return readOnly; }
+    void setReadWrite(int val) { readWrite = val; }
+    int getReadWrite() const { return readWrite; }
+    void setWriteOnly(int val) { writeOnly = val; } 
+
+private:
+    int noAccess;
+    int readOnly;
+    int readWrite;
+    int writeOnly;
+};
+```
+
+通过精心设计，可以细微的划分访问控制权限。
+
+最后就是封装，如果日后你需要改变某个值的计算方式，使用函数方式进行访问变量，用户完全不会知道
+发生了什么改变。这种灵活性有时显得十分重要。
+
+```cpp
+class SpeedDataCollection {
+public:
+    void addValue(int speed);
+    double average() const;
+};
+```
+
+上述代码可以有两个优化方向。一，在对象中维护一个平均速度，当每次调用 average 时直接返回对象。
+二，每次被调用时重新计算平均值。
+
+前者需要额外的存储，但是速度十分迅速。而后者计算缓慢却不需要额外的存储空间。因此在内存吃紧，但
+很少需要平均值的机器上可以使用前者，内存宽裕但是频繁调用 average 的机器上则可以使用后者。
+
+proteced 限定与 public 在封装上的影响基本类似，后者可以说完全没有封装性，但 protected 的
+封装性也十分有限，因为这将影响所有 derived class。
+
+从封装的角度看，其实只有两种访问权限: private(提供封装) 和 其他(不提供封装)。
+
+## 条款23: 宁以 non-member、non-friend 替换 member 函数
+
+```cpp
+class WebBrowser {
+public:
+    void clearCach();
+    void clearHistory();
+    void removeCoockies();
+
+    void clearEverything();
+};
+
+void clearBrowser(WebBrowser& wb) {
+    wb.clearCach();
+    wb.clearHistory();
+    wb.removeCoockies();
+}
+```
+
+clearEverything 和 clearBrowser 相比之下，后者更好。这点与直观印象相反，面向对象的原则是
+数据应该尽可能的被封装，然而与直观相反的是，member 函数带来的封装性要比 non-member 函数的
+封装性更低。因为 non-member 函数能提供较大的“包裹弹性”。
+
+对于封装而言，越多东西被封装，代码可改动的内容也就越大，而改动影响到的客户越少。而一个数据越多
+函数可以访问，那它的封装性也就越差。
+
+正如条款 22所言，我们要将成员变量声明为 private，而想要访问该变量就需要借助 成员函数 或者 
+友元函数。结合前一段所说，选择 non-member non-friend 函数，其封装性也就越好。
+
+有两点内容需要注意：
+1. 这个条款用于区分 member 和 non-member non-friend 函数，而非 non-member 函数。
+2. 这里的 non-member non-firend 也可以是其他 class 的 member 函数，只要不是 friend
+
+当随着类型的扩充，可能会提供大量的便利函数，而用户通常只需要其中的某一类。比如 WebBrowser 可
+能提供了与书签相关的、与打印相关的、与cookie管理相关的内容。这时就可以使用不同的头文件进行管
+理。
+
+```cpp
+// webbrowser.h 关于 WebBrowser 的定义，以及核心机能
+namespace WebBrowserStuff { // 放在一个命名空间中
+class WebBrowser {};
+// 核心机能函数
+}
+
+// webbrowserbookmarks.h
+namespace WebBrowserStuff { 
+// 书签相关函数
+}
+
+// webbrowsercookies.h
+namespace WebBrowserStuff { 
+// cookie相关函数
+}
+```
