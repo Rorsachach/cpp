@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Designs and Declarations.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="%E8%AE%BE%E8%AE%A1%E4%B8%8E%E5%A3%B0%E6%98%8E">设计与声明</h1>
+<h2 id="%E6%9D%A1%E6%AC%BE18-%E8%AE%A9%E6%8E%A5%E5%8F%A3%E5%AE%B9%E6%98%93%E8%A2%AB%E6%AD%A3%E7%A1%AE%E4%BD%BF%E7%94%A8%E4%B8%8D%E6%98%93%E8%A2%AB%E8%AF%AF%E7%94%A8">条款18: 让接口容易被正确使用，不易被误用</h2>
+<hr>
+<ul>
+<li>好的接口很容易被正确使用，不容易被误用。你应该在你的所有接口中努力达成这些性质</li>
+<li>“促进正确使用”的办法包括接口的一致性，以及与内置类型的行为兼容</li>
+<li>“阻止误用”的办法包括建立新类型、限制类型上的操作，束缚对象值，以及消除客户的资源管理责任</li>
+<li>shared_ptr 支持定制型删除器。这可以防范DLL问题，可被用来自动解除互斥锁等等。</li>
+</ul>
+<hr>
+<p>设计接口的理想原则是，如果客户企图使用某个接口而没有获得他所预期的行为，这个代码就不应该通过编译；如果代码通过了编译，
+它的作用就该是客户想要的。这就要求首先必须考虑客户可能做出的错误。</p>
+<pre class="hljs"><code><div><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Date</span> {</span>
+<span class="hljs-keyword">public</span>:
+    Date(<span class="hljs-keyword">int</span> month, <span class="hljs-keyword">int</span> day, <span class="hljs-keyword">int</span> year);
+};
+</div></code></pre>
+<p>上面这段代码存在两个问题：</p>
+<ul>
+<li>客户可能会按照错误的顺序传递参数</li>
+<li>客户可能传递一个无效的月份或者天数</li>
+</ul>
+<p>可以通过导入新类型而获得预防。</p>
+<pre class="hljs"><code><div><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">Day</span> {</span>
+    <span class="hljs-function"><span class="hljs-keyword">explicit</span> <span class="hljs-title">Day</span><span class="hljs-params">(<span class="hljs-keyword">int</span> d)</span> : <span class="hljs-title">val</span><span class="hljs-params">(d)</span> </span>{}
+    <span class="hljs-keyword">int</span> val;
+};
+
+<span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">Month</span> {</span>
+    <span class="hljs-function"><span class="hljs-keyword">explicit</span> <span class="hljs-title">Month</span><span class="hljs-params">(<span class="hljs-keyword">int</span> m)</span> : <span class="hljs-title">val</span><span class="hljs-params">(m)</span> </span>{}
+    <span class="hljs-keyword">int</span> val;
+};
+
+<span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">Year</span> {</span>
+    <span class="hljs-function"><span class="hljs-keyword">explicit</span> <span class="hljs-title">Year</span><span class="hljs-params">(<span class="hljs-keyword">int</span> y)</span> : <span class="hljs-title">val</span><span class="hljs-params">(y)</span> </span>{}
+    <span class="hljs-keyword">int</span> val;
+};
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Date</span> {</span>
+<span class="hljs-keyword">public</span>:
+    Date(<span class="hljs-keyword">const</span> Month&amp; month, <span class="hljs-keyword">const</span> Day&amp; day, <span class="hljs-keyword">const</span> Year&amp; year);
+};
+
+Date(Month(<span class="hljs-number">2</span>), Day(<span class="hljs-number">15</span>), Year(<span class="hljs-number">2022</span>));
+</div></code></pre>
+<p>这样做就起到了警示作用，同时又限定了传递顺序。</p>
+<p>限定了传递顺序后，我们可以进一步对使用的值进行限定。简单的方法是使用 enum 来限定，但是 enum 并不具备类型安全性，例如
+enums 可以被用来当作一个 ints 使用。因此可以重新设计一个类。</p>
+<pre class="hljs"><code><div><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Month</span> {</span>
+<span class="hljs-keyword">public</span>:
+    <span class="hljs-function"><span class="hljs-keyword">static</span> Month <span class="hljs-title">Jan</span><span class="hljs-params">()</span> </span>{ <span class="hljs-keyword">return</span> Month(<span class="hljs-number">1</span>); }
+    <span class="hljs-function"><span class="hljs-keyword">static</span> Month <span class="hljs-title">Feb</span><span class="hljs-params">()</span> </span>{ <span class="hljs-keyword">return</span> Month(<span class="hljs-number">2</span>); }
+    ...
+    <span class="hljs-function"><span class="hljs-keyword">static</span> Month <span class="hljs-title">Dec</span><span class="hljs-params">()</span> </span>{ <span class="hljs-keyword">return</span> Month(<span class="hljs-number">12</span>); }
+<span class="hljs-keyword">private</span>:
+    <span class="hljs-keyword">int</span> val;
+    <span class="hljs-function"><span class="hljs-keyword">explicit</span> <span class="hljs-title">Month</span><span class="hljs-params">(<span class="hljs-keyword">int</span> m)</span> : <span class="hljs-title">val</span><span class="hljs-params">(m)</span> </span>{}
+};
+</div></code></pre>
+<p>将 Month construct 设置为 private 防止产生新的月份。如果需要选择特定的月份，使用 static function 来完成。</p>
+<p>预防客户错误的另一个方法是限制什么事可做，什么不能做。常见的方法是加入 const 限定。例如使用 const 修饰 operator*
+的返回类型，可以阻止客户因 用户定义类型而犯错。</p>
+<p>另一个一般性准则是：“让 types 容易被正确使用，不容易被误用”。其表示形式是：除非有好理由，否则应该尽量令你的 types
+行为与内置 types 一致。这条准则的内在理由是为了能够提供行为一致的接口。</p>
+<p>任何要求客户必须记得做某件事情，就是有着 “不正确使用” 的倾向。例如条款 13 中所提供的 createInvestment 函数。如果
+期望客户使用智能指针来接受，实际上是放纵客户产生资源泄露。</p>
+<pre class="hljs"><code><div><span class="hljs-function"><span class="hljs-built_in">std</span>::<span class="hljs-built_in">shared_ptr</span>&lt;Investment&gt; <span class="hljs-title">createInvestment</span><span class="hljs-params">()</span></span>;
+</div></code></pre>
+<p>上面这种写法杜绝了客户使用过程中忘记 delete 的错误，因为客户必须将其存储在 std::shared_ptr 中。除此之外，也可以提
+供特殊的 deleter 来防止客户错误的调用自行定义的 deleter。</p>
+<pre class="hljs"><code><div><span class="hljs-function"><span class="hljs-built_in">std</span>::<span class="hljs-built_in">shared_ptr</span>&lt;Investment&gt; <span class="hljs-title">createInvestment</span><span class="hljs-params">()</span> </span>{
+    <span class="hljs-function"><span class="hljs-built_in">std</span>::<span class="hljs-built_in">shared_ptr</span>&lt;Investment&gt; <span class="hljs-title">retVal</span><span class="hljs-params">(
+        <span class="hljs-keyword">static_cast</span>&lt;Investment*&gt;(<span class="hljs-number">0</span>),
+        getRidofInvestment()
+    )</span></span>;
+    retVal = ...; <span class="hljs-comment">// 令 retVal 指向正确的对象</span>
+    <span class="hljs-keyword">return</span> retVal;
+}
+</div></code></pre>
+<p>上面这种写法，可以直接返回一个 “将getRidofInvestment” 绑定为删除器的 std::shared_ptr。这样做的另一个好处是它会
+自动调用 deleter，因此可以消除潜在的客户错误: cross-DLL problem。这个错误发生于“在 DLL 中被 new 创建的对象，却
+在另一个 DLL 内被 delete 释放”。这类行为，在众多平台上会导致运行期错误。而 std::shared_ptr 不会发生这个问题。</p>
+<h2 id="%E6%9D%A1%E6%AC%BE19-%E8%AE%BE%E8%AE%A1-class-%E7%8A%B9%E5%A6%82%E8%AE%BE%E8%AE%A1-type">条款19: 设计 class 犹如设计 type</h2>
+<hr>
+<ul>
+<li>class 的设计就是 type 的设计。在定义一个新的 type 之前，请确定你已经考虑过本条覆盖的所有讨论主题。</li>
+</ul>
+<hr>
+<p>程序编码的大部分时间都在扩张类型系统。因此需要了解如何设计一个高效的 class (Type)。首先需要了解这需要面对哪些问题：</p>
+<ul>
+<li>新 type 的对象应该如何被创建和销毁？</li>
+<li>对象初始化和对象赋值该有什么样的差别？别混淆初始化和赋值，因为他们对应于不同的函数调用。</li>
+<li>新 type 对象如果被 pass by value 意味着什么？</li>
+<li>什么是新 type 的合法值？对 class 的成员变量而言，通常只有某些数值集是有效的。</li>
+<li>你的新 type 需要配合某个继承图系吗？</li>
+<li>你的新 type 需要什么样的转换？</li>
+<li>什么样的操作符和函数对此新 type 而言是合理的？</li>
+<li>什么样的标准函数应该驳回？</li>
+<li>谁该取用新 type 的成员？</li>
+<li>什么是新 type 的“未声明接口”？</li>
+<li>你的新 type 有多么一般化？</li>
+<li>你真的需要一个新的 type 吗？</li>
+</ul>
+<h2 id="%E6%9D%A1%E6%AC%BE20-%E5%AE%81%E4%BB%A5-pass-by-reference-to-const-%E6%9B%BF%E6%8D%A2-pass-by-value">条款20: 宁以 pass-by-reference-to-const 替换 pass-by-value</h2>
+<hr>
+<ul>
+<li>尽量以 pass-by-reference-to-const 替换 pass-by-value。前者通常比较高效，并可避免切割问题</li>
+<li>以上规则并不适用于内置类型，以及 STL 的迭代器和函数对象。对他们而言，往往 pass-by-value 更合适</li>
+</ul>
+<hr>
+<pre class="hljs"><code><div><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span> {</span>
+<span class="hljs-keyword">public</span>:
+    Person();
+    <span class="hljs-keyword">virtual</span> ~Person();
+
+<span class="hljs-keyword">private</span>:
+    <span class="hljs-built_in">std</span>::<span class="hljs-built_in">string</span> name;
+    <span class="hljs-built_in">std</span>::<span class="hljs-built_in">string</span> address;
+};
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Student</span> :</span> <span class="hljs-keyword">public</span> Person {
+<span class="hljs-keyword">public</span>:
+    Student();
+    ~Student();
+
+<span class="hljs-keyword">private</span>:
+    <span class="hljs-built_in">std</span>::<span class="hljs-built_in">string</span> schoolName;
+    <span class="hljs-built_in">std</span>::<span class="hljs-built_in">string</span> schoolAddress;
+};
+
+<span class="hljs-function"><span class="hljs-keyword">bool</span> <span class="hljs-title">validateStudent</span><span class="hljs-params">(Student s)</span></span>;
+Student a;
+<span class="hljs-keyword">bool</span> aIsOk = validateStudent(a);
+</div></code></pre>
+<p>上述代码使用 by-value 的方式传值。在这个过程中，首先会调用 Student 的 copy constructor 来对 a 进行赋值，并且在
+validateStudent 返回时调用 destructor。其中包含两个 string 的成员变量，因此也会发生对应的复制和销毁操作。同时，
+Student 继承自 Person，那么意味着 Person 也会发生复制和销毁，其中包含的两个成员变量也会发生复制和销毁。</p>
+<p>可以看到这将经历 6 次构造和析构。使用 pass by reference to const 的方式传递则不会有任何进行调用。</p>
+<pre class="hljs"><code><div><span class="hljs-function"><span class="hljs-keyword">bool</span> <span class="hljs-title">validateStudent</span><span class="hljs-params">(<span class="hljs-keyword">const</span> Student&amp; s)</span></span>;
+</div></code></pre>
+<p>by-reference 方式也可以避免 slicing 的发生。当一个 derived class 对象被以 by-value 的方式传入到 base class
+中时会发生 slicing，即原有的 derived class 对象的特化性质全被切割掉了。因为这个过程调用的时 base class copy
+constructor。而不会将其余内容进行复制。</p>
+<pre class="hljs"><code><div><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Window</span> {</span>
+<span class="hljs-keyword">public</span>:
+    <span class="hljs-function"><span class="hljs-built_in">std</span>::<span class="hljs-built_in">string</span> <span class="hljs-title">name</span><span class="hljs-params">()</span> <span class="hljs-keyword">const</span></span>;
+    <span class="hljs-function"><span class="hljs-keyword">virtual</span> <span class="hljs-keyword">void</span> <span class="hljs-title">display</span><span class="hljs-params">()</span> <span class="hljs-keyword">const</span></span>;
+};
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">WindowWithScrollBars</span> :</span> <span class="hljs-keyword">public</span> Window {
+<span class="hljs-keyword">public</span>:
+    <span class="hljs-function"><span class="hljs-keyword">virtual</span> <span class="hljs-keyword">void</span> <span class="hljs-title">display</span><span class="hljs-params">()</span> <span class="hljs-keyword">const</span></span>;
+};
+
+<span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">printNameAndDisplay</span><span class="hljs-params">(Window w)</span> </span>{
+    <span class="hljs-built_in">std</span>::<span class="hljs-built_in">cout</span> &lt;&lt; w.name();
+    w.display();
+}
+
+WindowWithScrollBars w;
+printNameAndDisplay(w);
+</div></code></pre>
+<p>上述代码只会调用 Window::display 而不会调用子类的 display 方法，因为发生了切割。解决 slicing 的方法就是用 by
+reference to const 的方式进行传递。</p>
+<pre class="hljs"><code><div><span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">printNameAndDisplay</span><span class="hljs-params">(<span class="hljs-keyword">const</span> Window&amp; w)</span> </span>{
+    <span class="hljs-built_in">std</span>::<span class="hljs-built_in">cout</span> &lt;&lt; w.name();
+    w.display();
+}
+</div></code></pre>
+<p>事实上，by-reference 的底层实现是 pointer 方式，因此如果有个内置类型的对象，by-value 的方式往往比 by-reference
+的方式更加高效。对于 STL 中的迭代器和函数对象，也十分适用。</p>
+<p>注意：小型的自定义类型并不意味着和内置类型对象的成本划等号。也就意味着，即使小也不一定适用于 by-value 方式。主要原因
+包括两点：</p>
+<ul>
+<li>编译器可能不这么认为，它可能将 double 放进缓存器中，却不愿意将你用 double 实现的对象放进缓存器。</li>
+<li>type 会变化，随着 type 的不断维护更新可能会变得越来越大。</li>
+</ul>
+<p>所以 “pass-by-value 并不昂贵” 的唯一对象就是 <strong>内置类型</strong> 和 <strong>STL的迭代器和函数对象</strong>。</p>
+<h2 id="%E6%9D%A1%E6%AC%BE21-%E5%BF%85%E9%A1%BB%E8%BF%94%E5%9B%9E%E5%AF%B9%E8%B1%A1%E6%97%B6%E5%88%AB%E5%A6%84%E6%83%B3%E8%BF%94%E5%9B%9E%E5%85%B6-reference">条款21: 必须返回对象时，别妄想返回其 reference</h2>
+<hr>
+<ul>
+<li>绝对不要返回 pointer 或 reference 指向一个 local stack 对象，或返回一个 reference 指向一个 heap-allocated 对象</li>
+</ul>
+<hr>
+<pre class="hljs"><code><div><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Rational</span> {</span>
+<span class="hljs-keyword">public</span>:
+    Rational (<span class="hljs-keyword">int</span> numerator = <span class="hljs-number">0</span>, <span class="hljs-keyword">int</span> denominator = <span class="hljs-number">1</span>);
+
+<span class="hljs-keyword">private</span>:
+    <span class="hljs-keyword">int</span> n, d;
+    <span class="hljs-keyword">friend</span> <span class="hljs-keyword">const</span> Rational <span class="hljs-keyword">operator</span>* (<span class="hljs-keyword">const</span> Rational&amp; lhs, <span class="hljs-keyword">const</span> Rational&amp; rhs);
+};
+</div></code></pre>
+<p>上述代码中，以 by value 的方式返回计算结果。而上述内容无法修改为返回 reference 因为会出现
+意向不到的问题。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> Rational&amp; <span class="hljs-keyword">operator</span>* (<span class="hljs-keyword">const</span> Rational&amp; lhs, <span class="hljs-keyword">const</span> Rational&amp; rhs) {
+    <span class="hljs-function">Rational <span class="hljs-title">result</span> <span class="hljs-params">(lhs.n * rhs.n, lhs.d * rhs.d)</span></span>;
+    <span class="hljs-keyword">return</span> result;
+}
+</div></code></pre>
+<p>返回 stack 对象显然是不合理的，因为当脱离当前的 scoop 后，result 被释放，于是返回的 reference
+指向了被销毁的地方。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> Rational&amp; <span class="hljs-keyword">operator</span>* (<span class="hljs-keyword">const</span> Rational&amp; lhs, <span class="hljs-keyword">const</span> Rational&amp; rhs) {
+    Rational* result = <span class="hljs-keyword">new</span> Rational(lhs.n * rhs.n, lhs.d * rhs.d);
+    <span class="hljs-keyword">return</span> *result;
+}
+</div></code></pre>
+<p>那么返回一个 heap object 呢？这显然也是不合理的，因为你完全不知道何时去释放掉 new 出来的对
+像，甚至有可能你都无法找到那个生成的对象，例如：</p>
+<pre class="hljs"><code><div>Rational w, x, y, z;
+w = x * y * z; <span class="hljs-comment">// 连续两次调用，而你无法获取第一次调用产生的指针</span>
+</div></code></pre>
+<p>那么结果就是，当必须要返回新对象时，直接返回新对象就行了。如果成本过高，编译器会想办法进行优化。</p>
+<h2 id="%E6%9D%A1%E6%AC%BE22-%E5%B0%86%E6%88%90%E5%91%98%E5%8F%98%E9%87%8F%E5%A3%B0%E6%98%8E%E4%B8%BA-private">条款22: 将成员变量声明为 private</h2>
+<hr>
+<ul>
+<li>切记将成员变量声明为 private。这可赋予客户访问数据的一致性、可细微划分访问权限、允许约束条件获得保障，为提供 class 作者以充分的实现弹性</li>
+<li>protected 并不比 public 更具封装性</li>
+</ul>
+<hr>
+<p>首先需要了解为什么成员变量不应该是 public 和 protected 的，然后显然易见应当使用 private。</p>
+<p>首先从语法的一致性开始。如果成员变量不是 public，客户就需要使用成员函数来访问成员变量。如此
+以来就不再需要区分 成员变量 和 成员函数了，全都按照后者方式访问就行了。</p>
+<p>其次，使用函数方式可以更加精确的控制成员变量。而如果成员变量是 public 的，这就意味着任何人都
+有权限随时更改对象的成员变量。</p>
+<pre class="hljs"><code><div><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">AccessLevels</span> {</span>
+<span class="hljs-keyword">public</span>:
+    <span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">getReadOnly</span><span class="hljs-params">()</span> <span class="hljs-keyword">const</span> </span>{ <span class="hljs-keyword">return</span> readOnly; }
+    <span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">setReadWrite</span><span class="hljs-params">(<span class="hljs-keyword">int</span> val)</span> </span>{ readWrite = val; }
+    <span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">getReadWrite</span><span class="hljs-params">()</span> <span class="hljs-keyword">const</span> </span>{ <span class="hljs-keyword">return</span> readWrite; }
+    <span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">setWriteOnly</span><span class="hljs-params">(<span class="hljs-keyword">int</span> val)</span> </span>{ writeOnly = val; } 
+
+<span class="hljs-keyword">private</span>:
+    <span class="hljs-keyword">int</span> noAccess;
+    <span class="hljs-keyword">int</span> readOnly;
+    <span class="hljs-keyword">int</span> readWrite;
+    <span class="hljs-keyword">int</span> writeOnly;
+};
+</div></code></pre>
+<p>通过精心设计，可以细微的划分访问控制权限。</p>
+<p>最后就是封装，如果日后你需要改变某个值的计算方式，使用函数方式进行访问变量，用户完全不会知道
+发生了什么改变。这种灵活性有时显得十分重要。</p>
+<pre class="hljs"><code><div><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SpeedDataCollection</span> {</span>
+<span class="hljs-keyword">public</span>:
+    <span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">addValue</span><span class="hljs-params">(<span class="hljs-keyword">int</span> speed)</span></span>;
+    <span class="hljs-function"><span class="hljs-keyword">double</span> <span class="hljs-title">average</span><span class="hljs-params">()</span> <span class="hljs-keyword">const</span></span>;
+};
+</div></code></pre>
+<p>上述代码可以有两个优化方向。一，在对象中维护一个平均速度，当每次调用 average 时直接返回对象。
+二，每次被调用时重新计算平均值。</p>
+<p>前者需要额外的存储，但是速度十分迅速。而后者计算缓慢却不需要额外的存储空间。因此在内存吃紧，但
+很少需要平均值的机器上可以使用前者，内存宽裕但是频繁调用 average 的机器上则可以使用后者。</p>
+<p>proteced 限定与 public 在封装上的影响基本类似，后者可以说完全没有封装性，但 protected 的
+封装性也十分有限，因为这将影响所有 derived class。</p>
+<p>从封装的角度看，其实只有两种访问权限: private(提供封装) 和 其他(不提供封装)。</p>
+<h2 id="%E6%9D%A1%E6%AC%BE23-%E5%AE%81%E4%BB%A5-non-membernon-friend-%E6%9B%BF%E6%8D%A2-member-%E5%87%BD%E6%95%B0">条款23: 宁以 non-member、non-friend 替换 member 函数</h2>
+<hr>
+<ul>
+<li>宁可拿 non-member non-friend 函数替换 member 函数。这样做可以增加封装性、包裹弹性和机能扩充性。</li>
+</ul>
+<hr>
+<pre class="hljs"><code><div><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">WebBrowser</span> {</span>
+<span class="hljs-keyword">public</span>:
+    <span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">clearCach</span><span class="hljs-params">()</span></span>;
+    <span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">clearHistory</span><span class="hljs-params">()</span></span>;
+    <span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">removeCoockies</span><span class="hljs-params">()</span></span>;
+
+    <span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">clearEverything</span><span class="hljs-params">()</span></span>;
+};
+
+<span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">clearBrowser</span><span class="hljs-params">(WebBrowser&amp; wb)</span> </span>{
+    wb.clearCach();
+    wb.clearHistory();
+    wb.removeCoockies();
+}
+</div></code></pre>
+<p>clearEverything 和 clearBrowser 相比之下，后者更好。这点与直观印象相反，面向对象的原则是
+数据应该尽可能的被封装，然而与直观相反的是，member 函数带来的封装性要比 non-member 函数的
+封装性更低。因为 non-member 函数能提供较大的“包裹弹性”。</p>
+<p>对于封装而言，越多东西被封装，代码可改动的内容也就越大，而改动影响到的客户越少。而一个数据越多
+函数可以访问，那它的封装性也就越差。</p>
+<p>正如条款 22所言，我们要将成员变量声明为 private，而想要访问该变量就需要借助 成员函数 或者
+友元函数。结合前一段所说，选择 non-member non-friend 函数，其封装性也就越好。</p>
+<p>有两点内容需要注意：</p>
+<ol>
+<li>这个条款用于区分 member 和 non-member non-friend 函数，而非 non-member 函数。</li>
+<li>这里的 non-member non-firend 也可以是其他 class 的 member 函数，只要不是 friend</li>
+</ol>
+<p>当随着类型的扩充，可能会提供大量的便利函数，而用户通常只需要其中的某一类。比如 WebBrowser 可
+能提供了与书签相关的、与打印相关的、与cookie管理相关的内容。这时就可以使用不同的头文件进行管
+理。</p>
+<pre class="hljs"><code><div><span class="hljs-comment">// webbrowser.h 关于 WebBrowser 的定义，以及核心机能</span>
+<span class="hljs-keyword">namespace</span> WebBrowserStuff { <span class="hljs-comment">// 放在一个命名空间中</span>
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">WebBrowser</span> {</span>};
+<span class="hljs-comment">// 核心机能函数</span>
+}
+
+<span class="hljs-comment">// webbrowserbookmarks.h</span>
+<span class="hljs-keyword">namespace</span> WebBrowserStuff { 
+<span class="hljs-comment">// 书签相关函数</span>
+}
+
+<span class="hljs-comment">// webbrowsercookies.h</span>
+<span class="hljs-keyword">namespace</span> WebBrowserStuff { 
+<span class="hljs-comment">// cookie相关函数</span>
+}
+</div></code></pre>
+<h2 id="%E6%9D%A1%E6%AC%BE24-%E8%8B%A5%E6%89%80%E6%9C%89%E5%8F%82%E6%95%B0%E7%9A%86%E9%9C%80%E8%A6%81%E7%B1%BB%E5%9E%8B%E8%BD%AC%E6%8D%A2%E8%AF%B7%E4%B8%BA%E6%AD%A4%E9%87%87%E7%94%A8-non-member-%E5%87%BD%E6%95%B0">条款24: 若所有参数皆需要类型转换，请为此采用 non-member 函数</h2>
+<hr>
+<ul>
+<li>如果你需要为某个函数的所有参数进行类型转换，那么这个函数必须是个 non-member。</li>
+</ul>
+<hr>
+<p>令 classes 支持饮食类型转换通常是一个糟糕的主意。但是也存在例外，例如设计一个 class 来表示
+有理数，允许整数类型转换为有理数似乎颇为合理。</p>
+<pre class="hljs"><code><div><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Rational</span> {</span>
+<span class="hljs-keyword">public</span>:
+    Rational (<span class="hljs-keyword">int</span> numerator = <span class="hljs-number">0</span>, <span class="hljs-keyword">int</span> denominator = <span class="hljs-number">1</span>);
+    <span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">numerator</span><span class="hljs-params">()</span> <span class="hljs-keyword">const</span></span>;
+    <span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">denominator</span><span class="hljs-params">()</span> <span class="hljs-keyword">const</span></span>;
+
+<span class="hljs-keyword">private</span>:
+    <span class="hljs-keyword">int</span> _numerator;
+    <span class="hljs-keyword">int</span> _denominator;
+};
+</div></code></pre>
+<p>对于上面这个类，如果希望写一个 乘法 函数应该怎样操作呢?</p>
+<pre class="hljs"><code><div><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Rational</span> {</span>
+<span class="hljs-keyword">public</span>:
+    <span class="hljs-keyword">const</span> Rational <span class="hljs-keyword">operator</span>*(<span class="hljs-keyword">const</span> Rational&amp; rhs) <span class="hljs-keyword">const</span>;
+};
+</div></code></pre>
+<p>最简单的方式肯定是写在 class 内，这显然是能正常运行的。但是如果你想实现混合运算又怎么办，例如：</p>
+<pre class="hljs"><code><div><span class="hljs-function">Rational <span class="hljs-title">oneHalf</span><span class="hljs-params">(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>)</span></span>;
+Rational result = oneHalf * <span class="hljs-number">2</span>; <span class="hljs-comment">// 成功</span>
+Rational result = <span class="hljs-number">2</span> * oneHalf; <span class="hljs-comment">// 错误</span>
+</div></code></pre>
+<p>此时就会出现问题，因为 2.operator*() 并不存在，因为 2 是常量。紧接着编译器会尝试寻找一个可
+以被调用的 non-member operator*。此时仍然有问题，因为不存在一个接收 int 和 Rational 的
+乘法。</p>
+<p>而 oneHalf * 2 为什么能成功？首先其调用的是 oneHalf.operator*(Rational)，其次由于 Rational
+的 constructor 没有使用 explict 修饰，因此是可以被隐式转换得来的。</p>
+<p>想要完全支持混合运算，可以让 operator* 成为一个 non-member 函数，允许编译器在每一个实参身
+上执行隐式类型转换。</p>
+<pre class="hljs"><code><div><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Rational</span> {</span>
+<span class="hljs-keyword">public</span>:
+    Rational (<span class="hljs-keyword">int</span> numerator = <span class="hljs-number">0</span>, <span class="hljs-keyword">int</span> denominator = <span class="hljs-number">1</span>) : _numerator(numerator),
+      _denominator(denominator) {}
+    <span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">numerator</span><span class="hljs-params">()</span> <span class="hljs-keyword">const</span> </span>{ <span class="hljs-keyword">return</span> _numerator; }
+    <span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">denominator</span><span class="hljs-params">()</span> <span class="hljs-keyword">const</span> </span>{ <span class="hljs-keyword">return</span> _denominator; }
+<span class="hljs-keyword">private</span>:
+    <span class="hljs-keyword">int</span> _numerator;
+    <span class="hljs-keyword">int</span> _denominator;
+};
+
+<span class="hljs-keyword">const</span> Rational <span class="hljs-keyword">operator</span>*(<span class="hljs-keyword">const</span> Rational&amp; lhs, <span class="hljs-keyword">const</span> Rational&amp; rhs) {
+  <span class="hljs-keyword">return</span> Rational(lhs.numerator() * rhs.numerator(), 
+    lhs.denominator() * rhs.denominator());
+}
+</div></code></pre>
+<p>这种形式可以很好的实现混合算数。需要额外注意，既然可以通过 Rational 的 public 成员函数来完
+成这种运算的实现，就不要将 operator* 标记为 friend 函数。</p>
+<p>此外，这条的实现方式是在从 Object-Oriented C++ 的角度而选择的做法，当你跨进 Template C++
+时则会有新的争议、解法需要考虑。这点会在条款46中看到。</p>
+<h2 id="%E6%9D%A1%E6%AC%BE25-%E8%80%83%E8%99%91%E5%86%99%E5%87%BA%E4%B8%80%E4%B8%AA%E4%B8%8D%E6%8A%9B%E5%87%BA%E5%BC%82%E5%B8%B8%E7%9A%84-swap-%E5%87%BD%E6%95%B0">条款25: 考虑写出一个不抛出异常的 swap 函数</h2>
+<hr>
+<ul>
+<li>当 std::swap 对你的类型效率不高时，提供一个 swap 成员函数，并确定这个函数不抛出异常。</li>
+<li>如果你提供一个 member swap，也该提供一个 non-member swap 用来调用前者。对于 classes (而非 templates) 也请特化 std::swap</li>
+<li>调用 swap 时应针对 std::swap 使用 using 声明式，然后调用 swap 并且不带任何 “命名空间资格修饰”</li>
+<li>为 “用户定义类型” 进行 std templates 全特化是好的，但千万不要尝试在 std 内加入某些对 std 而言全新的东西</li>
+</ul>
+<hr>
+<p>swap是个有趣的函数，它是STL的一部分，后来称为 “异常安全性编程” 的脊柱。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">namespace</span> <span class="hljs-built_in">std</span> {
+    <span class="hljs-function"><span class="hljs-keyword">template</span>&lt;<span class="hljs-keyword">typename</span> T&gt;
+    <span class="hljs-keyword">void</span> <span class="hljs-title">swap</span><span class="hljs-params">(T&amp; a, T&amp; b)</span> </span>{
+        <span class="hljs-function">T <span class="hljs-title">temp</span><span class="hljs-params">(a)</span></span>;
+        a = b;
+        b = temp;
+    }
+}
+</div></code></pre>
+<p>上面这种实现方法有时候显得有些慢，因为对于某些类型而言，这些复制动作无一必要。想要更加快速，最
+主要的方式就是 “以指针指向一个对象，内含真正的数据”，这种设计就是所谓的 pimpl 手法(pointer
+to implementation)。</p>
+<pre class="hljs"><code><div><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">WidgetImpl</span> {</span>
+<span class="hljs-keyword">public</span>:
+<span class="hljs-keyword">private</span>:
+  <span class="hljs-keyword">int</span> a, b, c;
+  <span class="hljs-built_in">std</span>::<span class="hljs-built_in">vector</span>&lt;<span class="hljs-keyword">double</span>&gt; v;
+};
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Widget</span> {</span>
+<span class="hljs-keyword">public</span>:
+  Widget(<span class="hljs-keyword">const</span> Widget&amp; rhs);
+  Widget&amp; <span class="hljs-keyword">operator</span>=(<span class="hljs-keyword">const</span> Widget&amp; rhs) {
+    *ipml = *(rhs.ipml);
+  }
+
+<span class="hljs-keyword">private</span>:
+  WidgetImpl* ipml;
+}
+</div></code></pre>
+<p>上面就是一个使用 pimpl 手法实现的 Widget class。当使用 swap 时，直接调换 ipml 指针即可。
+但是我们需要告知 std::swap 需要这么做，否则仍然是默认行为。一个做法是将 std::swap 针对 Widget
+进行特化。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">namespace</span> <span class="hljs-built_in">std</span> {
+  <span class="hljs-keyword">template</span> &lt;&gt;
+  <span class="hljs-keyword">void</span> swap&lt;Widget&gt;(Widget&amp; a, Widget&amp; b) {
+    swap(a.ipml, b.ipml);
+  }
+}
+</div></code></pre>
+<p>其中 template &lt;&gt; 用来表示这是 std::swap 的一个全特化版本，而后面的 <Widget> 表示这一特化
+版本针对 Widget 设计。通常我们不能改变 std 命名空间中的任何东西，但是我们可以为标准 template
+制作特化版本，使它专属于我们自己的 classes。</p>
+<p>但是由于 ipml 是 private 的，因此需要这个特化版本声明为 friend，但是形式和以前的大不一样。</p>
+<pre class="hljs"><code><div><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Widget</span> {</span>
+<span class="hljs-keyword">public</span>:
+  <span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">swap</span><span class="hljs-params">(Widget&amp; other)</span> </span>{
+    <span class="hljs-keyword">using</span> <span class="hljs-built_in">std</span>::swap;
+    swap(ipml, other.ipml);
+  }
+
+<span class="hljs-keyword">private</span>:
+  WidgetImpl* ipml;
+};
+
+<span class="hljs-keyword">namespace</span> <span class="hljs-built_in">std</span> {
+  <span class="hljs-keyword">template</span> &lt;&gt;
+  <span class="hljs-keyword">void</span> swap&lt;Widget&gt;(Widget&amp; a, Widget&amp; b) {
+    a.swap(b);
+  }
+}
+</div></code></pre>
+<p>特化函数调用 Widget 的 swap 成员函数。</p>
+<p>如果假设 Widget 和 WidgetImpl 都是 class templates 呢？也许会想到偏特化，但这是不合理的
+因为 c++ 允许 class template 进行偏特化，而 function template 则不允许偏特化。如果打算
+偏特化一个 function template，那么惯用的手段实际上是重载。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">namespace</span> <span class="hljs-built_in">std</span> {
+  <span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> T&gt;
+  <span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">swap</span><span class="hljs-params">(Widget&lt;T&gt;&amp; a, Widget&lt;T&gt;&amp; b)</span> </span>{
+    a.swap(b);
+  }
+}
+</div></code></pre>
+<p>但是对于 std 这个特殊命名空间而言，客户可以对其中的 templates 进行特化，但不允许添加新的
+templates。这也就意味着重载是不行的。一个好的方案是使用一个 non-member swap 来调用 member
+swap，但是不再将 non-member swap 声明为全特化或重载。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">namespace</span> WidgetStuff {
+
+<span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> T&gt;
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Widget</span> {</span>};
+
+<span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> T&gt;
+<span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">swap</span><span class="hljs-params">(Widget&lt;T&gt;&amp; a, Widget&lt;T&gt;&amp; b)</span> </span>{
+    a.swap(b);
+}
+}
+</div></code></pre>
+<p>了解了所有的 swap 写法后，需要注意的一点是，最好能够同时提供 std::swap 的特化版本以及 non-member
+swap。这是为了允许客户有多种选择，当其中之一失效时仍然可以有正确的保证。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> T&gt;
+<span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">doSomething</span><span class="hljs-params">(T&amp; obj1, T&amp; obj2)</span> </span>{
+    <span class="hljs-keyword">using</span> <span class="hljs-built_in">std</span>::swap;
+    swap(obj1, obj2);
+}
+</div></code></pre>
+<p>上述这个代码中，如果 T 对应的没专属 swap 存在则调用，否则会调用 std::swap。而这个过程中，编
+译器仍然喜欢 T 的特化版本，因此会调用针对 T 的 std::swap 特化版本。但是千万要注意不要使用，
+std::swap 形式，而是使用 swap 形式，否则固定调用的就是 std::swap。</p>
+<p>最后一点劝告，成员版的 swap 函数不要抛出异常，因为它帮助 classes 提供强烈的异常安全性保障。
+这一约束仅适用于 成员版，而非适用于 non-member，因为 swap 缺省版本基于 copy，而一般情况下
+两者都允许抛出异常。不抛出异常和高效置换是相等的，因为高效的基础在于置换几乎面向 内置类型 进行
+操作(pimpl 手法的底层指针)，而内置类型绝对不会抛出异常。</p>
+
+</body>
+</html>
