@@ -184,3 +184,256 @@ for (VPW::iterator it = winPtrs.begin(); it != winPtrs.end(); ++it) {
 会保护调用者不受内部任何动作的影响。
 
 ## 条款28: 避免返回 handles 指向对象内部成分
+
+```cpp
+class Point {
+public:
+  Point(int x, int y);
+  void setX(int newVal);
+  void setY(int newVal);
+};
+
+struct RectData {
+  Point ulhc; // upper left-hand corner
+  Point lrhc; // lower right-hand corner
+};
+
+class Rectangle {
+public:
+  Point& upperLeft() const { return pData->ulhc; }
+  Point& lowerRight() const { return pData->lrhc; }
+private:
+  std::shared_ptr<RectData> pData;
+};
+```
+
+这样设计虽然能够通过编译，但是却是错误的，因为它违背了 reference constness 的原则。显然当你
+使用一个 const Rectangle 对象调用 upperLeft() 时，你会获得一个指向内部数据 ulhc 的引用。
+而这个引用却没有限定，因此可以被修改。而这一行为与 const 恰好冲突。
+
+这就是 handles 的特点，它包括 reference、pointer 和 iterator。如果返回一个 “代表对象内部
+数据” 的 handle，随之而来的就是 “降低对象封装性” 的风险。
+
+使用 const 进行限定，可以实现由限度的松弛封装性，即可读但不可更改。
+
+```cpp
+const Point& upperLeft() const {}
+const Point& lowerRight() const {}
+```
+
+但是即使这样，还是会产生 dangling handles 的风险。这种风险往往来自于函数返回值。
+
+```cpp
+class GUIObject {};
+const Rectangle boundingBox(const GUIObject& obj);
+
+GUIObject* pgo;
+const Point* pUpperLeft = &(boundingBox(*pgo).upperLeft());
+```
+
+上述函数就会发生 dangling handles 的风险。因为实际上 pUpperLeft 指向的是一个临时变量的 ulhc，
+即 temp.upperLeft()。而当这条语句运行结束之后，temp 会被销毁，那么此时 pUpperLeft 就变成
+了空悬、虚吊。
+
+## 条款29: 为“异常安全”而努力是值得的
+
+```cpp
+class PrettyMenu {
+public:
+  void changeBackground(std::istream& imgSrc);
+private:
+  Mutex mutex;
+  Image* bgImage;
+  int imageChange;
+};
+
+void PrettyMenu::changeBackground(std::istream& imgSrc) {
+  lock(&mutex);
+  delete bgImage;
+  ++imageChanges;
+  bgImage = new Image(imgSrc);
+  unlock(&mutex);
+}
+```
+
+上述代码不是 异常安全 的。异常安全需要满足两个条件，当异常被抛出时：
+- 不泄露任何资源: 一旦 new Image 抛出异常，unlock 就不再执行，也就是说 mutex 永远被锁。
+- 不允许数据败坏: 如果 new Image 抛出异常，bgImage 就指向了一个已经删除的对象，imageChanges 也被累加，而没有新的图像产生。
+
+资源泄露的解决方案在 条款13 中已经指出可以使用对象来管理资源，条款14 中则给出了一个 Lock 类
+的实现方案。因此可以改写为:
+
+```cpp
+void PrettyMenu::changeBackground(std::istream& imgSrc) {
+  Lock m(&mutex);
+  delete bgImage;
+  ++imageChanges;
+  bgImage = new Image(imgSrc);
+}
+```
+
+对于数据败坏的解决方案我们需要进行抉择，在此之前先了解一下选项的术语:
+- 基本承诺: 如果异常抛出，程序内的任何事物仍然保持在有效状态下。然而此时程序的现实状态不可预料，可能是前一状态或是缺省状态。客户需要额外的函数来判断。
+- 强烈保证: 如果异常抛出，程序状态不改变。成功就完全成功，否则就回复到调用之前的状态。这相较于前者调用起来更加简单，因为只有两个状态，前一状态和成功后状态。
+- 不抛掷保证: 承诺不抛出异常，因为他们总是能够正确运行。比如内置类型就会提供 nothrow 保证。但是这并不是说绝不会抛出异常，而是如果产生异常那将是严重错误，而不可解决。
+
+如果想要 异常安全性，那么就需要在上面三者中选择一个。选择的原则是，可能的话提供 nothrow 保证，
+但是大多数条件下提供 基本保证 或者 强烈保证。
+
+```cpp
+class PrettyMenu {
+public:
+  void changeBackground(std::istream& imgSrc);
+private:
+  Mutex mutex;
+  std::shared_ptr<Image> bgImage;
+  int imageChange;
+};
+
+void PrettyMenu::changeBackground(std::istream& imgSrc) {
+  Lock m(&mutex);
+  bgImage.reset(new Image(imgSrc));
+
+  ++imageChanges;
+}
+```
+
+这样改写代码，可以保证 基本承诺。首先是使用 std::shared_ptr 来管理 bgImage。这有两点好处 1. 
+强化资源管理 2. 使用内置的 reset 函数来实现替换操作。其次将 ++imageChanges 放到最后，保证
+只有正确运行才计数。
+
+但是上面只保证了 基本承诺，因为 imgSrc 的状态并不确定，它的读取记号可能已经被移走。但这种更改
+很容易实现，因此不再进一步考虑。
+
+下面需要了解另一个实现 强烈保证的手段—— copy and swap。即 swap 之前先进行 copy 操作。
+
+```cpp
+struct PMImpl {
+  std::shared_ptr<Image> bgImage;
+  int imageChange;
+};
+
+class PrettyMenu {
+public:
+  void changeBackground(std::istream& imgSrc);
+private:
+  Mutex mutex;
+  std::shared_ptr<PMImpl> pImpl;
+};
+
+void PrettyMenu::changeBackground(std::istream& imgSrc) {
+  using std::swap;
+
+  Lock m(&mutex);
+  std::shared_ptr<PMImpl> pNew(new PMImpl(*pImpl));
+  pNew->bgImage.reset(new Image(imgSrc));
+  ++pNew->imageChanges;
+
+  swap(pImpl, pNew);
+}
+```
+
+使用 copy-and-swap 能够实现强烈保证，但是并不是总能成功。
+
+```cpp
+void someFunc() {
+  f1();
+  f2();
+}
+```
+
+例如上面这种形式的代码，即使 f1 成功调用，只要 f2 失败，那么就破坏了强烈保证的原则。这问题出
+在连带影响上。如果函数只操作局部性状态，那就相对容易提供强烈保证，否则就不行。例如数据库的修改
+动作往往就无法提供强烈保证。
+
+除此之外，copy-and-swap 的效率问题也很严重。所以，当强烈保证可以实现时，你的确应该提供它，但
+是“强烈保证”并非在任何时刻都显得实际。而不切实际时，就应该提供“基本保证”。
+
+## 条款30: 透彻了解 inlining 的里里外外
+如果 inline 函数的本体很小，编译器针对“函数本体”所产生的码可能比针对“函数调用”所产生的码更小。
+将函数 inline 确实可以导致较小的目标码和较高的指令告诉缓存装置命中率。
+
+inline 的定义可以分为隐式和显式:
+
+```cpp
+// 隐式
+class Person {
+public:
+  int age() const {return theAge;}
+private:
+  int theAge;
+};
+```
+
+```cpp
+// 显式
+template<typename T>
+inline const T& std::max(const T& a, const T& b) {
+  return a < b ? b : a;
+}
+```
+
+编译器通常会拒绝将太过复杂的函数 inlining，而所有对 virtual 函数的调用也都会导致 inlining 
+落空。总的来看，一个表面上看似 inline 的函数是否真的是 inline 主要取决于你的建置环境，主要
+取决于编译器。有时候编译器可能还会为 inlining 生成一个函数本体，比如当你需要获取函数指针时编
+译器就不得不生成一个 outlined 函数本体。
+
+关于构造函数和析构函数，使用 inline 可能是一个糟糕的想法。例如 default constructor，看上
+去似乎是一段空代码，但是实际上编译器会给你填充大量的内容，防止其产生异常。而这恰恰违背了 短小 
+的要求。
+
+除此之外，将函数声明为 inline 所需要面对更多的是，随着代码的维护可能函数会进行扩充，这样就不
+适用 inline 标记了。
+
+所以选择是否适用 inline 的逻辑策略是，一开始先不要将任何函数声明为 inline，或至少将 inlining 
+施行范围局限在那些 “一定成为 inline” 或者 “十分平淡无奇” 的函数身上。
+
+## 条款31: 将文件间的编译依存关系降至最低
+假设你对 c++ 程序的某个 class 实现做出了轻微修改，当你进行编译时可能遇到大量代码重新编译的情
+况。这个原因在于 c++ 没有把 "将接口从实现中分离" 这件事做好。
+
+```cpp
+class Person {
+public:
+  Person(const std::string& name, const Date& birthday, const Address& addr);
+  std::string name() const;
+  std::string birthDate() const;
+  std::string address() const;
+
+private:
+  std::string theName;
+  Date theBirthDate;
+  Address theAddress;
+};
+```
+
+上述代码在进行编译时，需要引入其他定义文件。这样一来就形成了一种编译依存关系。那么如何将接口
+分离呢？使用 “声明依存性” 替换 “定义依存性”。
+
+```cpp
+#include <string>
+#include <memory>
+
+class PersonImpl;
+class Date;
+class Address;
+
+class Person {
+public:
+  Person(const std::string& name, const Date& birthday, const Address& addr);
+  std::string name() const;
+  std::string birthDate() const;
+  std::string address() const;
+
+private:
+  std::shared_ptr<PersonImpl> pImpl; // pimpl idiom
+};
+```
+
+这样一来，就完全分离了他们之间的联系，也是真正的“接口与实现分离”。原则是：让头文件尽可能自我满
+足，万一做不到，则让其他文件内的声明式相依。
+
+其他的设计策略也都基于此:
+- 如果使用 reference 或 pointers 可以完成任务，就不要使用 objects。
+- 如果能够，尽量用 class 声明式替换 定义。
+- 为声明式 和 定义式 提供不同的头文件。
