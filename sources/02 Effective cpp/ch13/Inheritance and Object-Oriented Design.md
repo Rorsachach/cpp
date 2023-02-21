@@ -408,3 +408,264 @@ EvilBadGuy ebg1(loseHealthSlowly);
 
 ### 借由 function 完成 Strategy
 
+将上面的这种实现方式改为通过 std::function 对象来实现。
+
+```cpp
+#include <functional>
+
+class GameCharacter;
+int defaultHealthCalc(const GameCharacter& gc);
+class GameCharacter {
+public:
+  typedef std::function<int (const GameCharacter&)> HealthCalcFunc;
+  explicit GameCharacter(HealthCalcFunc hcf = defaultHealthCalc) : healthFunc(hcf) {}
+  int healthValue() const {
+    return healthFunc(*this);
+  }
+private:
+  HealthCalcFunc healthFunc;
+};
+```
+
+这种改变是为非常细小的，只是将原有的函数指针转化为了一个 std::function 对象，相当于指向函数
+的泛化指针。但是有时可以提供更高的弹性。这主要来自于 std::function 可以封装普通函数、lambda 
+函数、仿函数(函数对象)以及成员函数。
+
+```cpp
+// 普通函数，但是返回值为 short，std::function 允许隐式转型
+short calcHealth(const GameCharacter& gc); 
+
+// 函数对象
+struct HealthCalculator {
+  int operator()(const GameCharacter& gc) const;
+};
+
+// 成员函数
+class GameLevel {
+public:
+  float health(const GameCharacter& gc) const;
+};
+
+class EvilBadGuy : public GameCharacter {
+public:
+  EvilBadGuy(HealthCalcFunc hcf) : GameCharacter(hcf) {}
+};
+
+EvilBadGuy ebg1(calcHealth); // 封装普通函数
+EvilBadGuy ebg2(HealthCalculator()); // 封装函数对象
+
+GameLevel currentLevel;
+EvilBadGuy ebg3(std::bind(
+  &GameLevel::health, 
+  currentLevel, 
+  std::placeholders::_1
+)); // 封装成员函数
+```
+
+上述代码为用户提供了更多的设计选择。
+
+### 古典的 strategy 模式
+传统的 Strategy 做法是采用一个分离的继承体系来完成的。其中包括两个根系，一个是用来表示角色的
+GameCharacter(EvilBadGuy, EyeCandyCharacter)，另一个则是用来表示生命计算的 HealthCalcFunc
+(SlowHealthLoser, FastHealthLoser)
+
+```cpp
+class GameCharacter;
+class HealthCalcFunc {
+public:
+  virtual int calc(const GameCharacter& gc) const {}
+};
+class GameCharacter {
+public:
+  explicit GameCharacter(HealthCalcFunc* phcf = &defaultHealthCalc) : pHealthCalc(phcf) {}
+  int healthValue const {
+    return pHealthCalc->calc(*this);
+  }
+
+private:
+  HealthCalcFunc* pHealthCalc;
+};
+```
+
+后续需要更更多的人物，以及生命值计算方法，只需要在这两个类的基础上进行继承就可以了。
+
+## 条款36: 绝不重新定义继承而来的 non-virtual 函数
+加入存在下面的继承关系:
+
+```cpp
+class B {
+public:
+  void mf(void);
+};
+
+class D : public B {
+public:
+  void mf(void);
+};
+
+D x;
+B* pb = &x;
+pb->mf();
+D* pd = &x;
+pd->mf();
+```
+
+上面的代码中，两次调用结果不一样。这主要是因为 non-virtual 函数是 静态绑定 的，这也就意味着
+使用 B pointer 来调用就会调用 B::mf，而用 D pointer 力调用则是 D::mf。另一方面 virtual 
+却是 动态绑定 的，所以 virtual function 并不会产生这个问题。
+
+那么为什么不要重新定义继承而来的 non-virtual 函数呢？两点原因:
+- 如果 D 需要重新定义 mf，而每个 B 对象又必须调用 B::mf，而非 D::mf，那么这就意味着这并非 public 继承关系。
+- 如果 D 需要 public 继承 B，并且 D 需要实现不同的 mf，那么就应该使用 virtual 函数，而不应该反映出 “不变性凌驾特异性” 的性质
+
+## 条款37: 绝不重新定义继承而来的缺省参数值
+这条条款的范围可以缩小，因为条款36已经讨论了不应该重新定义 non-virtual 函数，那实际上这里强
+调的就是 继承带有缺省数值的 virtual 函数。
+
+本条条款成立的主要原因就是: virtual 函数是动态绑定的，而缺省参数值则是静态绑定的。
+
+```cpp
+class Shape {
+public:
+  enum ShapeColor {Red, Green, Blue};
+  virtual void draw(ShapeColor color = Red) const = 0;
+};
+
+class Rectangle : public Shape {
+public:
+  virtual void draw(ShapeColor color = Green) const;
+};
+
+class Circle : public Shape {
+public:
+  virtual void draw(ShapeColor color) const;
+};
+
+Shape* p = new Rectangle();
+p->draw();
+```
+
+像上面的 Rectangle 类，重定义了缺省参数值，这可能会带来与预期相违背的结果。正如上面的调用方
+式，由于 p 的静态类型是 Shape*，而缺省参数是静态绑定的，因此实际上进行的是 p->draw(Red) 操
+作而非 p->draw(Green)。
+
+那如果并不重定义，只是将缺省传给 derived class 呢？
+
+```cpp
+class Rectangle : public Shape {
+public:
+  virtual void draw(ShapeColor color = Red) const;
+};
+```
+
+这种做法也是不可取的，因为代码重合。并且不好维护，比如后续将 Shape 的缺省参数改为 Green，那
+就又会出现上面同样的问题。一个好的解决方案是，使用条款35中的手段来更改这种代码，比如 NVI。
+
+```cpp
+class Shape {
+public:
+  enum ShapeColor {Red, Green, Blue};
+  void draw(ShapeColor color = Red) const {
+    doDraw(color);
+  }
+private:
+  virtual void doDraw(ShapeColor color) const = 0;
+};
+
+class Rectangle {
+private:
+  virtual void doDraw(ShapeColor color) const {
+    ...
+  }
+}
+```
+
+## 条款38: 通过复合塑模出 has-a 或 “根据某物实现出”
+复合关系是类型之间的一种关系，当某种类型的对象内含其他类型对象，就是这种关系。
+
+复合关系也和 public 继承一样具有现实意义，它主要包括两种:
+- has-a: 复合发生在应用域内的对象时，表现出 has-a 的关系。应用域就是为了塑造现实世界中的某些事物而设计的类。
+- is-implemented-in-terms-of: 复合发生在实现域内，表现出这种关系。实现域是为了实现某些细节而设计的类，比如缓冲区、互斥器、查找树等等。
+
+### has-a
+has-a 的关系很好理解，比如下面的代码就是 “人有一个地址” 这样的关系。
+
+```cpp
+class Address {};
+class PhoneNumber {};
+class Person {
+public:
+private:
+  std::string name;
+  Address address;
+  PhoneNumber voiceNumber;
+  PhoneNumber foxNumber;
+};
+```
+
+### is-implemented-in-terms-of
+这种 根据某物实现出 的意义则不太好理解。
+
+这里以 set 为例，假如你希望设计自己的 set，并且你知道可以使用底层的 linked lists 来实现。
+于是你开始尝试让 set 继承 list。
+
+```cpp
+template<typename T>
+class Set : public std::list<T> {};
+```
+
+看上去很完美，但是存在重大问题。我们已经知道了 public 是 is-a 的关系，那也就意味着 Set 一定
+是一个 list。但是 list 允许多个重复数据，而 Set 不允许。那显然两者并不是 is-a 的关系。正确
+的做法是，将 list 应用于 Set。
+
+```cpp
+template<class T>
+class Set {
+public:
+  bool member(const T& item) const {
+    return std::find(rep.begin(), rep.end(), item) != rep.end();
+  }
+  bool insert(const T& item) {
+    if (!member(item)) rep.push_back(item);
+  }
+  bool remove(const T& item) {
+    typename std::list<T>::iterator it = std::find(rep.begin(), rep.end(), item);
+    if (it != rep.end()) rep.erase(it);
+  }
+private:
+  std::list<T> rep;
+}
+```
+
+## 条款39: 明智而审慎的使用 private 继承
+private 继承有两条规则:
+1. private 继承关系，编译器不会自动将一个 derived class 对象转换为 base class。
+2. private 继承将从 base class 继承而来的所有成员在 derived class 中变成 private 属性。
+
+private 继承的含义是 implemented-in-terms-of。private 继承也意味着只有 实现部分 被继承，
+接口部分 被自动略去。而 private 仅是一种实现计数，没有设计意义。
+
+和前面提出的复合相比，应该尽可能的使用复合，必要时才使用 private 继承。这种必要源自当 protected 
+成员 或者 virtual 函数被牵扯进来时。
+
+一个例子是使用 timer。下面是一个 Timer 对象，它用来对时间进行计时操作。
+
+```cpp
+class Timer {
+public:
+  explicit Timer(int tickFrequency);
+  virtual void onTick() const;
+};
+```
+
+现在我们需要为 Widget 对象实现一个功能，让它记录每个成员函数被调用的次数。我们可以使用 private 
+继承来实现，因为只有这样才能够重新定义 Timer::onTick 方法。
+
+```cpp
+class Widget : private Timer {
+private:
+  virtual void onTick() const;
+}
+```
+
+## 条款40: 明智而审慎的使用多重继承
