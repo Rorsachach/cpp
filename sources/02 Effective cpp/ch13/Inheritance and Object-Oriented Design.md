@@ -665,7 +665,174 @@ public:
 class Widget : private Timer {
 private:
   virtual void onTick() const;
-}
+};
 ```
 
+但是使用 private 继承并不是必要的，我们可以使用复合来重构上面的代码。
+
+```cpp
+class Widget {
+private:
+  class WidgetTimer : public Timer {
+  public:
+    virtual void onTick() const {
+      ...
+    }
+  };
+  WidgetTimer timer;
+};
+```
+
+使用下面这种复合方式来撰写代码有两点好处:
+- 如果你希望 Widget 可以拥有子类，但是又向阻止子类重新定义 onTick，就需要使用复用。因为继承无法实现这种手段。
+- 如果你希望将 Widget 的编译依存性降至最低，就需要使用复用。因为这种形式不需要 include 任何东西。
+
+### 空白基类优化
+Empty Base Optimization(EOB)。这种行为源自对空白类大小的期待。通常，空白类的独立对象大小
+会不为0，因为 c++ 可能会安插一个 char 到空对象中。有的时候为了位对齐的需求，可能会更大。但是，
+非独立对象却不是，非独立对象则很有可能大小为 0。
+
+```cpp
+class Empty {};
+class HoldsAnInt {
+private:
+  int x;
+  Empty x;
+};
+
+// sizeof(HoldsAnInt) > sizeof(int)
+```
+
+```cpp
+class Empty {}
+class HoldsAnInt : private Empty {
+private:
+  int x;
+};
+
+// sizeof(HoldsAnInt) == sizeof(int)
+```
+
+可以看到使用继承方案，可以消除空白类的体积负担。而这里的 empty 类，可能并不是 empty 的，他们
+往往内涵 typedefs, enums, static 成员变量，或者 non-virtual 函数。这里的 empty 实际上
+是指，不含 non-static 成员变量。
+
+### 总结
+总的来说当你面对 “并不存在 is-a 关系” 的两个 classes，其中一个需要访问另一个的 protected 
+成员时，或者重新定义 virtual 函数，private 继承极有可能称为正统设计。当然，你也可以使用 public 
+继承和复合技术来替代这个过程，尽管有更高的复杂度。
+
 ## 条款40: 明智而审慎的使用多重继承
+
+### 语义歧义
+当涉及多重继承，程序可能从一个以上的 base classes 继承相同的名称，这会导致歧义。
+
+```cpp
+class BorrowableItem {
+public:
+  void checkOut(); // 离开时进行检查
+};
+class ElectronicGadget {
+private:
+  bool checkOut() const; // 执行自我检测，返回测试是否通过
+};
+
+class MP3Player : public BorrowableItem, public ElectronicGadget {};
+
+MP3Player mp3;
+mp3.checkOut(); // 究竟调用的哪个 checkOut。
+```
+
+虽然上面的 ElectronicGadget::checkOut 是 private 的，但是编译器在开始阶段只在乎调用的名
+称是否解析正确。而在此时会发生歧义，因为按照最佳匹配，两者具有相同的匹配程度。
+
+正确的做法是:
+
+```cpp
+mp3.BorrowableItem::checkOut()
+```
+
+### 钻石型多重继承
+
+```cpp
+class File {};
+class InputFile: public File {};
+class OutputFile: public File {};
+class IOFile: public InputFile, public OutputFile {};
+```
+
+上面就是一个钻石型的多重继承，其中存在的问题在于当 File 中有一个对象 A 时，IOFile 中应该有
+几分 A 对象。c++ 支持两种选择。
+
+- 多份
+这是一个缺省做法，就是从 InputFile 和 OutputFile 中都复制对象 A。上面的代码就是这样的效果。
+
+- 一份
+如果你希望只存在一份，那么你就需要令那个 base class 成为一个 virtual base class，也就是你
+必须使用 virtual 继承。
+
+```cpp
+class File {};
+class InputFile: virtual public File {};
+class OutputFile: virtual public File {};
+class IOFile: public InputFile, public OutputFile {};
+```
+
+从正确行为的观点来看，public 继承总应该时 virtual 的。但是这又涉及到成本问题，编译器为了避免
+成员变量重复，它必须在幕后做一些工作，这就导致几个结果: 1. virtual public 继承的体积更大，2. 
+virtual public 继承的访问速度更慢，3. classes 若派生自 virtual base，当需要初始化时，必
+须认知 virtual bases，不论距离 base 多远，4. 当一个新的 derived class 加入继承体系中，它
+必须承担其 virtual bases 的初始化责任。
+
+因此关于 virtual bases classes 的忠告很简单:
+1. 非必须使用 virtual base，就使用 non-virtual 继承。
+2. 如果必须使用 virtual base，那就尽量避免在其中放置数据。
+
+### public 继承 interface，private 继承协助类
+多重继承也有很多正常的实用场景。这里举例一个 public 和 private 继承并用的场景。
+
+```cpp
+class IPerson {
+public:
+  virtual ~IPerson();
+  virtual std::string name() const = 0;
+  virtual std::string birthDate() const = 0;
+};
+```
+
+IPerson 是一个接口，并且使用 工厂函数 产生 Person 对象。这也意味着，想要产生 Person 对象，
+首先需要设计一个类继承并实现 IPerson。
+
+另外一个工具类 PersonInfo，用来实现数据库相关操作，它为后续对象提供了一些好用的方法。
+
+```cpp
+class PersonInfo {
+public:
+  explicit PersonInfo(DatabaseId id);
+  virtual ~PersonInfo();
+  virtual const char* theName() const;
+  virtual const char* theBirthDate() const;
+private:
+  virtual const char* valueDelimOpen() const;
+  virtual const char* valueDElimClose() const;
+};
+```
+
+现在希望实现一个类，它既可以被生产为 IPerson，也可以依靠 PersonInfo 来实现 IPerson 其中的
+操作。
+
+```cpp
+class CPerson: public IPerson, private PersonInfo {
+public:
+  explicit CPerson(DatabaseId id): PersonInfo(id) {}
+  virtual std::string name() const { // 借用 PersonInfo 方法实现 IPerson 的方法
+    return PersonInfo::theName();
+  }
+  virtual std::string birthDate const {
+    return PersonInfo::theBirthDate();
+  }
+private:
+  virtual const char* valueDelimOpen() const { return "{"; } // 重写从 PersonInfo 继承来的 virtual 限界字符函数
+  virtual const char* valueDElimClose() const { return "}"; }
+}
+```
