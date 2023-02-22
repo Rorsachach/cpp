@@ -395,7 +395,7 @@ Directory& tempDir() {
 }
 ```
 
-这种结构下，函数十分淡出，可以通过 inline 来实现，尤其是如果他们被频繁调用的话。
+这种结构下，函数十分单纯，可以通过 inline 来实现，尤其是如果他们被频繁调用的话。
 > [!note]
 > 在 more effective c++ 中，作者在条款26中提到，不要产生内含 local static 对象的 inline non-member functions。
 > 主要是因为 inline non-member functions 存在内部连接，可能会将 local static 对象复制多份。但是，其中注释
