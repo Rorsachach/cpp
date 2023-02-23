@@ -248,3 +248,103 @@ void* Base::operator delete(void* rawMemory, std::size_t size) throw() {
 operator delete 的 size_t 数值可能不正确。
 
 ## 条款52: 写了 placement new 也要写 placement delete
+new operator 总是分为两步进行的，首先调用 operator new 进行空间申请，而第二步则是执行 constructor。
+如果后者出错，那么 operator new 所分配的地址空间应该怎样做？答案必然是被释放以防止内存泄露。
+但是有个问题，就是编译器怎么找到对应的 operator delete 呢？
+
+```cpp
+class Widget {
+public:
+  static void* operator new(std::size_t size, std::ostream& logStream); // 非正常形式的 new
+  static void operator delete(void* pMemory); // 正常形式的 new
+};
+
+{
+  Widget* pw = new (std::cerr) Widget;
+}
+```
+
+实际上编译器会选择同调用的 operator new 最相像的 operator delete 进行调用，也就是说寻找
+参数个数和类型都与 operator new 相同的某个 operator delete。例如上面这段代码，当 Widget 
+constructor 发生异常后就会调用 operator delete(std::size_t size, std::ostream& logStream);
+而上面没有定义就会产生另一个异常最终导致 abort。
+
+而在正常的主动删除情况下，可以直接 delete 即可，而此时并不会去调用与 operator new 对应版本
+的 operator delete。
+
+所以为了保证内存安全，你应该随时虽可提供相应形式的 delete。这和 placement new/delete 成对
+设计的道理相同。
+
+```cpp
+class Widget {
+public:
+  static void* operator new(std::size_t size, std::ostream& logStream); // 非正常形式的 new
+  static void operator delete(void* pMemory); // 正常形式的 new
+  static void operator delete(void* pMemory, std::ostream& logStream);
+};
+
+{
+  Widget* pw = new (std::cerr) Widget;
+}
+```
+
+需要注意的一点是，重新定义 operator new/delete 是会进行名称掩盖的。
+
+```cpp
+class Base {
+public:
+  static void* operator new(std::size_t size, std::ostream& logStream) throw(std::bad_alloc);
+};
+class Derived : public Base {
+public:
+  static void* operator new(std::size_t size) throw(std::bad_alloc);
+};
+
+Base* pb = new Base; // 错误，global 被掩盖了
+Base* pb = new (std::cerr) Base; // 正确
+
+Derived* pd = new (std::clog) Derived; // 错误，Base 被掩盖掉了
+Derived* pd = new Derived; // 正确
+```
+
+如果你不希望这些默认行为发生掩盖呢？你可以按照下面这样进行设计。
+
+```cpp
+class StandardNewDeleteForms {
+public:
+  // normal new/delete
+  static void* operator new(std::size_t size) throw(std::bad_alloc) {
+    return ::operator new(size);
+  }
+  static void operator delete(void* pMemory) throw() {
+    ::operator delete(pMemory);
+  }
+
+  // placement new/delete
+  static void* operator new(std::size_t size, void* ptr) throw(std::bad_alloc) {
+    return ::operator new(size, ptr);
+  }
+  static void operator delete(void* pMemory, void* ptr) throw() {
+    ::operator delete(pMemory, ptr);
+  }
+
+  // nothrow new/delete
+  static void* operator new(std::size_t size, const std::nothrow_t& nt) throw() {
+    return ::operator new(size, nt);
+  }
+  static void operator delete(void* pMemory, const std::nothrow& nt) throw() {
+    ::operator delete(pMemory);
+  }
+};
+
+
+class Widget : public StandardNewDeleteForms {
+public:
+  using StandardNewDeleteForms::operator new;
+  using StandardNewDeleteForms::operator delete;
+  static void* operator new(std::size_t size, std::ostream& logStream) throw(std::bad_alloc);
+  static void operator delete(void* pMemory, std::ostream& logStream) throw();
+};
+```
+
+利用继承机制和 using 声明式来取得标准形式。
