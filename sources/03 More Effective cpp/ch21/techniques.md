@@ -592,7 +592,161 @@ private:
 声明自己的 public operator new，那么它会继承 base 的 private 版本。如此一来无法 derived
 也无法使用 new 来创建。
 
+TODO：
+
 ## 条款28：Smart Pointer (智能指针) (*)
+当你使用 smart pointer 来取代 c++ 的内建指针时，你就会获得下面各种指针行为的控制权：
+- 构造和析构：你可以决定 smart pointer 什么时候被销毁以及销毁时如何做。
+- 复制和赋值：当一个 smart pointer 被复制或涉及赋值动作时，你可以控制发生什么事。
+- 解引用：当 client 解引 smart pointer 所指之物时，有权决定发生什么事情。
+
+smart pointers 由 templates 产生，它就像内建指针一样，具有强类型性(strongly typed)。一
+个 smart pointers 类似下面这种结构
+
+```cpp
+tempalte <class T>
+class SmartPtr {
+public:
+  // 构造与析构过程
+  SmartPtr(T* realPtr = 0);
+  ~SmartPtr();
+  // 复制与赋值过程
+  SmartPtr(const SmartPtr& rhs);
+  SmartPtr& operator=(const SmartPtr& rhs);
+  // 析构过程
+  T* operator->() const;
+  T& operator*() const;
+private:
+  T* pointee; // 指针指向的内容
+};
+```
+
+### smart pointer 使用示例
+考虑一个分布式系统，其中某些对象位于 local，某些位于 remote。本地对象的访问通常比远程对象的
+访问简单且快速。对于应用程序而言，如果本地对象和远程对象的处理方式有所不同，是件挺麻烦的事情。
+让所有对象都好像位于本地，应该是比较方便的做法。
+
+```cpp
+template <class T>
+class DBP突然{
+public:
+  DBPtr(T* realPtr = 0);
+  DBPtr(DataBaseID id);
+};
+
+class Tuple {
+public:
+  void displayEditDialog();
+  bool isValid() const;
+};
+
+template <class T>
+class LogEntry {
+public:
+  LogEntry(const T& obj);
+  ~LogEntry();
+};
+
+void editTuple(DBPtr<Tuple>& pt) {
+  LogEntry<Tuple> entry(*pt);
+  do {
+    pt->displayEditDialog();
+  } while (pt->isValid() == false);
+}
+```
+
+在上面这段代码中，editTuple 的编写者并不在乎 pt 指向的是本地的还是远程的数据，因为 DBPtr 会
+完成这些操作。另外一个 tips 是，LogEntry 对象并不像传统设计那样，以 “开始运转记录” 和 “结束
+运转记录” 等函数调用动作。而是使用 constructor 和 destructor 来进行操作。
+
+### Smart Pointers 的构造、赋值、析构
+
+#### 构造函数
+smart pointers 的 constructor 非常容易理解：确定一个目标物，然后让 smart pointer 内部的
+dumb pointer 来指向目标物。
+
+smart pointers 的 copy constructor、assignment operators 和 destructor 的实现却因为
+“拥有权”的观念而变得稍微复杂。例如删除操作，只有 dumb pointer 指向一个来自 heap 的对象时 delete 
+才会生效。
+
+#### 复制与赋值
+在进行复制时，多个 smart pointer 指向同一个对象，然后每个 smart pointer 都试图调用 delete 
+时，就可能出现 nullptr 的情况。
+
+想要解决这个问题，方法一，创先一个新的副本来防止多个指针指向同一个对象，此时就要设计 virtual 
+constructors。方法二，禁止复制和赋值。方法三，在 auto_ptr 中采用了一种更具弹性的解决方法，
+当 auto_ptr 被复制或被赋值，其 “对象拥有权” 会转移。
+
+```cpp
+template<class T>
+class auto_ptr {
+public:
+  auto_ptr(auto_ptr<T>& rhs);
+  auto_ptr<T>& operator=(auto_ptr<T>& rhs);
+private:
+  T* pointee;
+};
+
+template <class T>
+auto_ptr<T>::auto_ptr(auto_ptr<T>& rhs) {
+  // 将rhs.pointee对象拥有权转移给 *this
+  pointee = rhs.pointee;
+  rhs.pointee = 0;
+}
+
+template <class T>
+auto_ptr<T>& auto_ptr<T>::operator=(auto_ptr<T>& rhs) {
+  if (this == &rhs) return *this;
+  
+  delete pointee;
+  pointee = rhs.pointee;
+  rhs.pointee = 0;
+
+  return *this;
+}
+```
+
+由于 auto_ptr 的 copy constructor 被调用时，对象拥有权被转移了，所以以 by value 的方式
+传递 auto_ptr 是一个糟糕的决定。
+
+```cpp
+void printTreeNode(ostream& os, auto_ptr<TreeNode> p) {
+  os << p;
+}
+
+int main() {
+  auto_ptr<TreeNode> ptn(new TreeNode());
+  printTreeNode(std::cout, ptn);
+}
+```
+
+上述代码中，p 被以 copy constructor 的方式进行初始化，此时 ptn 中指向的对象被转移到了 p 这
+个局部变量中。随着 printTreeNode 的结束，p 被释放也就导致 new TreeNode 创建的对象被销毁。
+
+#### 析构
+
+```cpp
+template<class T>
+SmartPtr<T>::~SmartPtr() {
+  if (*this owns *pointee) {
+    delete pointee;
+  }
+}
+```
+
+上面是一个 destructor 的通用写法。有时候没必要做测试，例如当 auto_ptr 所指之物的拥有权总是
+在当前 auto_ptr 之上。有时候又需要更复杂的测试，例如使用引用计数的 shared_ptr，它必须决定
+是否进行删除之前对计数器进行调整。
+
+### 实现 Dereferencing Operators (解引操作符)
+
+### 测试 Smart Pointers 是否为 Null
+
+### 将 Smart Pointers 转换为 Dumb Pointers
+
+### Smart Pointers 和 “与继承有关的” 类型转换
+
+### Smart Pointers 与 const
 
 ## 条款29：Reference counting (引用计数)
 
