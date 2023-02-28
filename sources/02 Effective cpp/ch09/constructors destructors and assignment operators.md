@@ -147,6 +147,10 @@ AWOV::~AWOV() {}
 最后仍要强调 “virtual 析构函数” 只适用于带多态性质的 base classes 身上，如果没有多态性质，该操作只会徒增成本。
 
 ## 条款08: 别让异常逃离析构函数
+---
+- 析构函数绝对不要吐出异常。如果一个被析构函数调用的函数可能抛出异常，析构函数应该捕捉任何异常，然后吞下他们或结束程序。
+- 如果客户需要对某个操作函数运行期间抛出的异常做出反应，那么 class 应该提供一个普通函数（而非在析构函数中）执行该操作。
+---
 
 ```cpp
 class Widget {
@@ -176,7 +180,9 @@ public:
     ~DBConn() {
         try {
             db.close();
-        } catch (...) {}
+        } catch (...) {
+            // std::abort();
+        }
     }
 private:
     DBConnection db;
@@ -184,9 +190,9 @@ private:
 ```
 
 ## 条款09: 绝不再构造和析构过程中调用 virtual 函数
---
+---
 - 在构造和析构期间不要调用 virtual 函数，因为这类调用从不下降至 derived class
---
+---
 
 ```cpp
 class Transaction {

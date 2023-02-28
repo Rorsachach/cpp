@@ -311,7 +311,157 @@ public:
 式调用了，那也就无需担心 doMultiply 是否支持混合式乘法的问题了。
 
 ## 条款47: 请用 traits classes 表现类型信息
+使用 traits class 是一种非常常见的手段，以 STL 中的 工具性 templates——advance 为例。
 
+```cpp
+template<typename IterT, typename DistT>
+void advance(IterT& iter, DistT d); // 将迭代器像前移动 d 单位。
+```
+
+在 advance 的实现上，需要区别 random access 迭代器，或者其他类型迭代器。因为只有前者可以
+进行 += 操作。
+
+### STL 迭代器分类
+- input 迭代器：只能向前移动，一次一步，可读但只可读一次。代表：istream_iterators。
+- output 迭代器：只能向前移动，一次一步，可写但只可写一次。代表：ostream_iterators。
+- forward 迭代器：可以同时完成 input/output 迭代器工作，且可读可写多次。
+- Bidirectional 迭代器：除了向前移动还可以向后移动。
+- random access 迭代器：在 Bidirectional 迭代器的基础上，可以执行“迭代器算术”。
+
+这五类迭代器提供了专属的卷标结构(tag struct)，并且之间的继承关系是：
+
+```cpp
+struct input_iterator_tag {};
+struct output_iterator_tag {};
+struct forward_iterator_tag : public input_iterator_tag {};
+struct bidirectional_iterator_tag : public forward_iterator_tag {};
+struct random_access_iterator_tag : public bidirectional_iterator_tag {};
+```
+
+现在回到 advance 之上，我们已经清楚的知道了 random access 迭代器可以直接进行运算，因此不再
+需要像其他类型迭代器一样进行多遍递增递减操作。那么如何来判断一个 iter 是否为 random access 
+迭代器呢？使用 traits。
+
+traits 并不是 c++ 关键字或者一个预先定义好的构件，而是一个技术。按照这种技术写成的 templates
+在标准库中有若干个，其中针对迭代器的被命名为 iterator_traits。
+
+```cpp
+template <typename IterT>
+struct iterator_traits;
+```
+
+如何让自己所实现的迭代器能够运用这个 traits 呢？只需如下编写代码。
+
+```cpp
+template <>
+class deque {
+public:
+  class iterator {
+  public:
+    typedef random_access_iterator_tag iterator_category;
+  };
+};
+```
+
+然后，iterator_traits 会将 iterator class 中嵌入的 typedef 进行读取。
+
+```cpp
+template <typename IterT>
+struct iterator_traits {
+  typedef typename IterT::iterator::iterator_category iterator_category;
+};
+```
+
+虽然上面这种方式对于用户自定义的 iterator 是成立的，但是对指针却行不通。为此，iterator_traits 
+特别针对指针提供了一个偏特化版本。
+
+```cpp
+template<typename IterT>
+struct iterator_traits<IterT*> {
+  typedef random_access_iterator_tag iterator_category; // 指针 和 random access 的行为类似
+};
+```
+
+### 如何实现一个 traits class
+- 确认若干希望将来可以取得的类型相关信息，例如对 iterator 而言，希望将来可以取得分类。
+- 为该信息选择一个名称。
+- 提供一个 template 和一组特化版本，内涵你希望支持的类型和相关信息。
+
+
+有了 iterator_traits 如何实现一个 advance。可能你会选择使用 if-else 来进行逐一判断。但是
+这种效率并不高。更好的方法是使用和 template 一样在编译期进行判断的方法来实现。一种可行的做法
+是重载。
+
+```cpp
+template <typename IterT, typename DistT>
+void doAdvance(IterT& iter, DistT d, std::random_access_iterator_tag /*忽略变量名，因为后续用不到*/) {
+  iter += d;
+};
+template <typename IterT, typename DistT>
+void doAdvance(IterT& iter, DistT d, std::bidirectional_iterator_tag /*忽略变量名，因为后续用不到*/) {
+  if (d >= 0) { while(d--) ++iter; }
+  else { while(d++) --iter; }
+};
+template <typename IterT, typename DistT>
+void doAdvance(IterT& iter, DistT d, std::input_iterator_tag /*忽略变量名，因为后续用不到*/) {
+  if (d < 0) 
+    throw std::out_of_range("Negative distance");
+  while(d--) ++iter;
+};
+
+
+template <typename IterT, typename DistT>
+void advance(IterT& iter, DistT d) {
+  doAdvance(iter, d, typename std::iterator_traits<IterT>::iterator_category());
+}
+```
+
+现在，我们了解了如何使用一个 traits class。
+- 建立一组重载函数或者函数模板，彼此之间的差异只在于各自的 traits 参数。令每个函数实现码与其接受之 traits 信息相应和。
+- 建立一个控制函数或者函数模板，它调用上述这些“劳工函数”并传递 traits class 所提供的信息。
+
+Traits 广泛用于标注程序库。包括 iterator_traits，它不仅提供了上述类型功能，还提供了四份迭
+代器相关的信息，最有用的是 value_type。此外还有 char_traits 用来保存字符类型的相关信息，以
+及 numeric_limits 用来保存数值类型的相关信息。
 
 ## 条款48: 认识 template 元编程
+模板元编程 (Template metaprogramming, TMP) 是编写 template-based c++ 程序并执行于编译
+期的过程。它是以 c++ 写成、执行于 c++ 编译器内的程序。
 
+TMP有两个伟大的效力：
+1. 它让事情变得更容易。
+2. 由于 TMP 执行于 c++ 编译期，因此可将工作从运行期转移到编译期。
+
+一个好的例子是上一条款所设计的 advance 函数，使用 TMP 将原本通过运行时 if-else 的方法，通过
+重载的方法来让其在编译期实现。
+
+针对 TMP 而设计的程序库 (Boosts's MPL) 提供更高层级的语法。
+
+再从循环角度来看看 TMP 如何运作。TMP 并不提供真正的循环，而是使用递归方案来实现。TMP 的递归
+甚至不是正常种类，因为 TMP 循环并不涉及递归函数调用，而是涉及 “递归模板具现化”。
+
+### 使用 TMP 实现阶乘
+
+```cpp
+template <unsigned n>
+struct Factorial {
+  enum { value = n * Factorial<n - 1>::value };
+};
+
+template <>
+struct Factorial<0> { // 全特化 0! = 1
+  enum { value = 1 };
+};
+
+int main() {
+  std::cout << "5! = " << Factorial<5>::value << std::endl;
+  std::cout << "10! = " << Factorial<10>::value << std::endl;
+}
+```
+
+使用 Factorial<n>::value 就可以直接得到 n 阶阶乘。
+
+下面给出三个通过 TMP 能实现的目标实例:
+- 确保量度单位正确。例如质量、距离、时间、速度的关系。将一个质量赋值给速度是不正确的，但是距离除以时间赋值给速度则是正确的。使用 TMP 可以在编译期保证这种约束。
+- 优化矩阵运算。原有的矩阵乘法使用 operator* 来执行，必须返回新对象。而在多个矩阵连乘的过程中则会创建多个临时对象。通过 TMP 来实现，就有可能消除这些临时对象，并合并循环。
+- 可以生成客户定制之设计模式实现品。设计模式例如 Strategy, Observer, Visitor 等等都有多种实现方式。运用所谓的 policy-based design 之 TMP-based 技术，有可能产生一些 templates 用来表述独立的设计选项，然后可以任意结合它们，导致模式实现品带着客户指定的行为。这项技术已经被用来让若干 templates 实现出只能指针的行为策略，用以编译期生成数以百计不同的只能指针类型。
