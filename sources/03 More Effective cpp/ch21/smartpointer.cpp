@@ -56,7 +56,7 @@ int main() {
   if (!pVec2) std::cout << "!pVec2" << std::endl;
 
   SmartPointer<std::vector<int>> pVec3(new std::vector<int>({1,2,3,4,5,6}));
-  if (pVec2 == pVec3) std::cout << std::endl;
+  // if (pVec2 == pVec3) std::cout << std::endl;
   pVec2 = pVec1;
   // if (pVec1 == 0) std::cout << "pVec1 == 0" << std::endl;
 }
