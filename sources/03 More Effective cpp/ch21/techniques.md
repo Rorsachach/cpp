@@ -740,13 +740,284 @@ SmartPtr<T>::~SmartPtr() {
 
 ### 实现 Dereferencing Operators (解引操作符)
 
+```cpp
+template <class T>
+T& SmartPtr<T>::operator* () const {
+  // 执行有关 smart pointer 相关的处理过程
+  return *pointee;
+}
+```
+
+上面是一个 operator* 的基本实现方式。
+
+返回值一定要是一个 reference，有几点好处。1. 防止 slicing 的发生，因为返回值可能是 T 的继
+承类型，如果没有使用 reference，而是直接返回对象，会发生初始化操作，这时就会发生 slicing。
+得到的新对象不会调用动态类型对应的函数。（这一点在前面提到过）2. reference 的效率较高。
+
+operator-> 和 operator* 差不多，当一个调用 `pt->displayEditDialog()` 发生时，等价于 
+`(pt.operator->())->displayEditDialog()`。此时 operator-> 只会返回两种东西：1. dumb 
+pointer 2. smart pointer。大多数情况下你会希望返回一个 dumb pointer。
+
+```cpp
+template <class T>
+T* SmartPtr<T>::operator-> () const { // 注意这里是直接返回一个指针
+  // 执行有关 smart pointer 相关的处理过程
+  return pointee;
+}
+```
+
 ### 测试 Smart Pointers 是否为 Null
+对 smart pointers 如何判空是一个需要考虑的问题。显然，当前的设计没有办法完成该工作。一种方
+法是设计一个 isNull 函数来实现判空。
+
+```cpp
+template <class T>
+bool SmartPtr<T>::isNull() const {
+  return pointee == 0;
+}
+```
+
+但是这让 smart pointer 与 dumb pointer 的判空方式截然不同。为了能够让两者方式一致，一种方
+法是通过隐式类型转换，将其转换为 void* 来实现。
+
+```cpp
+template <class T>
+SmartPtr<T>::operator void*() {
+  return static_cast<void*>(pointee);
+}
+SmartPtr<int> pInt;
+if (pInt == 0)
+if (pInt)
+if (!pInt)
+```
+
+这种实现方法和 iostream classes 很类似。
+
+```cpp
+ifstream inputFile("datafile.dat");
+if (inputFile)
+```
+
+但是这种方法的缺点是，有些看上去就应该调用失败的做法却成功编译了。
+
+```cpp
+SmartPtr<Apple> pa;
+SmartPtr<Orange> po;
+if (pa == po)
+```
+
+上述代码中，我们并没有重写 operator== 操作符，但是却通过了编译。因为二者都自动转换为了 void* 
+然后进行比较。这也符合条款5所说的那样，对定制的类型转换操作符警惕。
+
+为了降低这种意外发生的概率，一个很好的方法是设计 operator! 而不是使用 void* 类型转换。
+
+```cpp
+template <class T>
+bool SmartPtr<T>::operator!() {
+  return pointee == 0;
+}
+SmartPtr<int> pInt;
+if (!pInt)
+```
+
+这种情况可以将风险降到最低，但是只能使用 !ptr 来进行判空，而不能使用 ptr 或者 ptr == 0。除
+此之外还有一个唯一的风险，但是很不常见，因为几乎没有人这样写代码。
+
+```cpp
+SmartPtr<Apple> pa;
+SmartPtr<Orange> po;
+if (!pa == !po)
+```
 
 ### 将 Smart Pointers 转换为 Dumb Pointers
+对于某些老式的接口，他们或许没有提供 smart pointers，所以为了能够适用其中，你希望将 smart 
+pointer 转换为 dumb pointer。使用 `&*pt` 是可以的，但是不简洁。一种方法就是设计隐式类型
+转换。
+
+```cpp
+template <class T>
+SmartPtr<T>::operator T*() {
+  return static_cast<T*>(pointee);
+}
+```
+
+这种转换方法，不仅解决了 smart pointer 转向 dubm pointer 的问题，同时也解决了 smart pointer 
+是否为 null 的问题。但是正如前面所提到的那样，隐式转换带来了其他负面影响。
+
+```cpp
+void processTuple(DBPtr<Tuple>& pt) {
+  Tuple* rawTuplePtr = pt; // 隐式转换
+  ...
+}
+```
+
+使用者很容易获取到 dumb pointer 并进行相关操作，这种行为是十分危险的。
+
+另外的一个问题是，c++ 编译器不允许连续多次的转换。
+
+```cpp
+class TupleAccessors {
+public:
+  TupleAccessors(const Tuple* pt);
+};
+
+TupleAccessors merge(const TupleAccessors& ta1, const TupleAccessors& ta2);
+DBPtr<Tuple> pt1, pt2;
+merge(pt1, pt2);
+```
+
+上面这段代码是无法通过编译的，因为这要经过两次转换，首先是 pt1 pt2 从 smart pointer 转向 
+dumb pointer，然后是 dumb pointer 转换为 TupleAccessors 类型。这种连续的转换行为，c++ 
+是不允许的。
+
+还有一种情况发生在 delete 过程中。
+
+```cpp
+DBPtr<Tuple> ptr = new Tuple;
+delete ptr;
+```
+
+上述代码本来不应该运行成功，因为 ptr 并非是 new 出来的，因此不能调用 delete。但是却运行成功
+了，因为 ptr 被隐式转换为了 Tuple* dumb pointer，此时指向的区域正好就是 new 出来的，因此
+成功了。然后当退出 scoop 时，ptr 被自动释放，调用 destructor，此时又将调用一次 delete，那
+么产生了异常。
+
+所以总的来讲，千万不要提供对 dumb pointers 的隐式转换操作符，除非迫不得已。
 
 ### Smart Pointers 和 “与继承有关的” 类型转换
 
+```cpp
+class MusicProduct {
+public:
+  MusicProduct (const string& title);
+  virtual void play() const = 0;
+  virtual void displayTitle() const = 0;
+};
+class Cassette : public MusicProduct {
+  Cassette(const string& title);
+  virtual void play() const;
+  virtual void displayTitle() const;
+};
+class CD : public MusicProduct {
+  CD(const string& title);
+  virtual void play() const;
+  virtual void displayTitle() const;
+};
+
+void displayAndPlay(const SmartPtr<MusicProduct> pmp, int numTimes) {
+  for (int i = 0; i < numTimes; ++i) {
+    pmp->displayTitle();
+    pmp->play();
+  }
+}
+
+SmartPtr<Cassette> funMusic(new Cassette("jazz"));
+SmartPtr<CD> nightmareMusic(new CD("disco"));
+displayAndPlay(funcMusic, 10);
+displayAndPlay(nightmareMusic, 0);
+```
+ 
+上述代码无法通过编译，因为 SmartPtr<MusicProduct> SmartPtr<Cassette> 和 SmartPtr<CD> 
+是完全不相关的，而不存在继承关系。
+
+或许你想通过全特化来通过编译。
+
+```cpp
+class SmartPtr<Cassette> {
+public:
+  operator SmartPtr<MusicProduct>() {
+    return SmartPtr<MusicProduct>(pointee);
+  }
+};
+```
+
+这显然是不现实的，因为你需要对每一个类型都写出如上操作，这违背了 template 的本意。
+
+c++ 中一种新的特性可以满足这种需求，它可以将 non-virtual member function 声明为 templates。
+
+```cpp
+template<class T>
+class SmartPtr {
+public:
+  SmartPtr(T* realPtr = 0);
+  ...
+
+  template <class newType>
+  operator SmartPtr<newType>() {
+    return SmartPtr<newType> (pointee);
+  }
+};
+```
+
+上述代码的巧妙之处在于，`return SmartPtr<newType> (pointee);` 返回的是一个通过构造函数
+创建的对象。在这个过程中，如果 T* 无法被隐式转换为 newType* 是不会成功运行的。这也就保证了
+指针转换的原有规则。
+
+这种转换实际上不止适用于继承关系中的向上转换，各种形式 smart pointer 的转换，都可以通过这种方式进
+行实现。
+
+利用 member templates 来转换 smart pointer，有两个缺点：
+1. 目前支持的编译器可能还不多，移植性不高。
+2. 其中涵盖大量的技术要点：函数调用的自变量匹配规则、隐式类型转换函数、template functions 的暗自实例化、member function template 计数。
+
+总结来看，我们无法将 smart pointer classes 的行为在 “与继承相关的类型转换” 上做到和 dumb 
+pointer 一样，最多是能够使用 member templates 来产生转换函数。
+
 ### Smart Pointers 与 const
+首先先回忆一下 dumb pointers 与 const
+
+```cpp
+CD goodCD("Flood");
+const CD* p; // p 指向一个 const CD object
+CD* const p = &goodCD; // p 是一个 const pointer，不能进行修改，但是指向的对象可以被修改
+const CD* const p = &goodCD;
+```
+
+smart pointers 也可以有这几种情况。
+
+```cpp
+CD goodCD("Flood");
+SmartPtr<CD> p;
+const SmartPtr<CD> p; // const pointer, non-const object
+SmartPtr<const CD> p; // non-const pointer, const object
+const SmartPtr<const CD> p; // const pointer, const objcet
+```
+
+但是 dumb pointers 可以有 指向 non-const 对象的指针作为指向 const 对象指针的初值。
+
+```cpp
+CD* pCD = new CD("Jazz");
+const CD* pConstCD = pCD;         // 正确
+
+SmartPtr<CD> pCD(new CD("Jazz"));
+SmartPtr<const CD> pConstCD(pCD); // 错误
+```
+
+smart pointer 无法实现这种操作，和上一小节讲的一样，这是两种类型。那么如果你的编译器支持 member 
+template 那你就可以实现一个类型转换操作符来解决这个问题。
+
+但是如果你没法使用 member template 呢？
+
+```cpp
+template <class T>
+class SmartPtrToConst {
+protected:
+  union {
+    const T* constPointee;
+    T* pointee;
+  };
+};
+
+template <class T>
+class SmartPtr : public SmartPtrToConst<T> {
+};
+
+SmartPtr<CD> pCD = new CD("Jazz");
+SmartPtrConst<CD> pConstCD = pCD;
+```
+
+使用继承的方式来实现，在 SmartPtr 中调用 pointee，而在 SmartPtrToConst 中则调用 constPointee，
+就实现了一个 const 方案。
 
 ## 条款29：Reference counting (引用计数)
 
