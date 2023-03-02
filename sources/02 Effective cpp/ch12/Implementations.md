@@ -407,15 +407,16 @@ private:
 };
 ```
 
-上述代码在进行编译时，需要引入其他定义文件。这样一来就形成了一种编译依存关系。那么如何将接口
-分离呢？使用 “声明依存性” 替换 “定义依存性”。
+上述代码在进行编译时，需要引入其他定义文件。这样一来就形成了一种编译依存关系。这种依存关系之下，
+如果头文件或者头文件依赖的头文件发生改变时，Person class 以及任何使用 Person class 的文件
+都必须重新编译。那么如何将接口分离呢？使用 “声明依存性” 替换 “定义依存性”。
 
 ```cpp
 #include <string>
 #include <memory>
 
-class PersonImpl;
-class Date;
+class PersonImpl; // Person 实现类的前置声明
+class Date; // 接口用到的 class 前置声明
 class Address;
 
 class Person {
@@ -430,10 +431,108 @@ private:
 };
 ```
 
-这样一来，就完全分离了他们之间的联系，也是真正的“接口与实现分离”。原则是：让头文件尽可能自我满
-足，万一做不到，则让其他文件内的声明式相依。
+上述代码的好处是，无论 PersonImpl 如何更改，或者其依赖 例如 Data，Address 如何更改，只需
+重新编译到 PersonImpl 即可。因为 Person 中使用一个指针来指向 PersonImpl 对象，因此不需要
+额外进行重新编译。这也就意味着，所有依赖 Person 的文件也不用重新更改了。这样一来，就完全分离
+了他们之间的联系，也是真正的“接口与实现分离”。原则是：让头文件尽可能自我满足，万一做不到，则
+让其他文件内的声明式相依。
 
 其他的设计策略也都基于此:
 - 如果使用 reference 或 pointers 可以完成任务，就不要使用 objects。
+你可以只靠一个类型声明式就定义出指向该类型的 references 和 pointers，但如果定义某类型的 objects，
+就需要用到该类型的定义式。
 - 如果能够，尽量用 class 声明式替换 定义。
+当你声明一个函数而它用到某个 class 时，你并不需要该 class 的定义。
 - 为声明式 和 定义式 提供不同的头文件。
+为了遵守上述原则，需要两个头文件，一个用于声明式，一个用于定义式。引用时只引用声明式头文件。
+
+```cpp
+/* date.h */
+class Date {
+  ...
+};
+```
+
+```cpp
+/* datefwd.h */
+class Date;
+```
+
+```cpp
+/* main.cpp */
+#include "datefwd.h"
+Date today();
+void clearAppointments(Date d);
+```
+
+这种方式效仿了 c++ 标准程序库头文件的 <iosfwd>。在其中包含了 iostream 各组件的声明式，其对
+应定义则分布在若干不同的头文件内，包括 <sstream>，<streambuf>，<fstream>，<iostream>。
+它另一个特点是，如果建置环境允许 template 定义放在非头文件中，那么就可以通过声明式头文件来提
+供 template。
+
+另外一种方式时使用 c++ 提供的关键字 export。
+
+回到 pimpl idiom，像 Person 这样使用 pimpl idiom 的 class 被称为 handle classes。他们
+所有的函数都将任务转交给相应的实现类。
+
+```cpp
+#include "Person.h"
+#include "PersonImpl.h"
+
+Person::Person(const std::string& name, const Date& birthday, const Address& addr) :
+  pImpl(new PersonImpl(name, birthday, addr)) {}
+std::string Person::name() const {
+  return pImpl->name();
+}
+```
+
+实现 handle classes 的另一个方法时令 Person 称为 interface class。
+
+```cpp
+class Person {
+public:
+  virtual ~Person();
+  virtual std::string name() const;
+  virtual std::string birthDate() const;
+  virtual std::string address() const;
+
+  static std::shared_ptr<Person> create(const std::string& name,
+    const Date& date, const Address& address);
+};
+
+class RealPerson : public Person {
+public:
+  RealPerson(const std::string& name, const Date& birthday, const Address& addr);
+  virtual ~RealPerson() {}
+  std::string name() const;
+  std::string birthDate() const;
+  std::string address() const;
+
+private:
+  std::string theName;
+  Date theBirthDate;
+  Address theAddress;
+};
+
+std::shared_ptr<Person> Person::create(const std::string& name,
+    const Date& date, const Address& address) {
+  return std::shared_ptr<Person>(new RealPerson(name, date, addres));
+}
+
+std::shared_ptr<Person> pp(Person::create(name, date, address));
+std::cout << pp->name()
+          << pp->birthDate()
+          << pp->address();
+```
+
+上面这段代码，将 Person 改为了 interface class，并提供了一个静态类方法用于实现 factory 
+函数。factory 函数的职责在于，根据条件生成一个实现类对象，这里就是 RealPerson。在使用过程
+中，使用 Person pointer 进行操作，而实现则放在 RealPerson 中，这也同样实现了 pimpl idiom 
+类似的降低依赖的效果。
+
+在成本角度，无论是 handle class 还是 interface class 都会带来额外的成本。handle class 
+通过 implementation pointer 进行对象访问，增加了一层间接访问。同时，每一个对象又会有额外的
+开销。最后你要使用指针，那就可能发生动态内存分配的额外开销，以及 bad_alloc 的风险。而 interface 
+class 则每次调用 virtual 都必须经过 vptr。同时 vptr 又增加了存储开销。
+
+因此你需要在成本和耦合度之间做出抉择。
