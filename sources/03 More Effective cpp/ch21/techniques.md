@@ -1020,6 +1020,243 @@ SmartPtrConst<CD> pConstCD = pCD;
 就实现了一个 const 方案。
 
 ## 条款29：Reference counting (引用计数)
+reference counting 这项计数，允许多个等值对象共享同一实值。它的发展有两个动机：
+1. 为了简化 heap objects 的记录工作。
+2. 为了实现一种常识——如果许多对象有相同的值，应该只共享同一份实例。
+
+在学习如何实现出 reference counting 之前，先了解一下什么情况下会产生多个实值。
+
+```cpp
+class String {
+public:
+  String (const char* value = "");
+  String& operator=(const String& rhs);
+
+private:
+  char* data;
+};
+String a, b, c, d, e;
+a = b = c = d = e = "hello"
+```
+
+上面这段代码中 a~e 都使用同一个实值。根据 operator= 的实现不同可能出现不同的情况。一个简单
+的方案就是让 a~e 都拥有自己的一份数据。这样 operator= 就很好实现了。
+
+```cpp
+String& String::operator=(const String& rhs) {
+  if (this == rhs) return *this;
+
+  delete[] data;
+  data = new char[strlen(rhs.data) + 1];
+  strcpy(data, rhs.data);
+
+  return *this;
+}
+```
+
+如果我们希望只使用一份实值供所有对象使用，那么该选用哪种结构呢？
+
+```text
+a ____________
+b ___________ |
+             \|
+c ----------------> "hello"
+d ___________/|
+e ____________|
+```
+
+这种结构很难实现，因为我们需要追踪多少对象引用此值，而记录存储在多个对象中就很难进行判断。因此
+我们可以将计数部分单独提取出来作为单独的 refence count。
+
+```text
+a ____________
+b ___________ |
+             \|
+c ----------------> 5 ---> "hello"
+d ___________/|
+e ____________|
+```
+
+### Reference Counting 的实现
+设计一个 String 的计数器，我们需要让该计数器与 String 之间的耦合关系降低，所以该设计器要不但
+存储引用次数，同时也要存储他们追踪的对象值。该计算器只会被 String 使用，因此将该类嵌套进 String 
+中。同时我们希望该计数器，外界不可见，但对于 String 类型内部成员函数却可见，所以设计为一个 private 
+struct。
+
+```cpp
+class String {
+public:
+private:
+  struct StringValue {
+    int refCount;
+    char* data;
+    StringValue(const char* initValue);
+    ~StringValue();
+  }; // struct 默认访问级别是 public
+  StringValue* value;
+};
+
+String::StringValue::StringValue(const char* initValue) : refCount(1) {
+  data = new char[strlen(initValue) + 1];
+  strcpy(data, initValue);
+}
+
+String::StringValue::~StringValue() {
+  delete[] data;
+}
+```
+
+上面就是一个 String 计数器的基本结构。可以看到，我们并没有在 StringValue 中实现处理 refCount 
+相关的功能，因为这部分实际上由 String 来实现。StringValue 的主要目的就是提供一个存储地点。
+
+```cpp
+class String {
+public:
+  String(const char* initValue = "") : value(new StringValue(initValue)) {}
+  String(const String& rhs);
+  ~String();
+private:
+  struct StringValue {};
+  StringValue* value;
+};
+```
+
+上面的第一个构造函数已经实现，十分简单，但是会产生拥有相同值的对象。
+
+```cpp
+String s1("hello");
+String s2("hello");
+```
+
+```text
+s1 ---> 1 ---> "hello"
+s2 ---> 1 ---> "hello"
+```
+
+想要只使用一个 hello，需要令 String 或者 StringValue 对现有的 StringValue 对象进行追踪。
+（我也不会，希望大佬提供实现方案）
+
+```cpp
+String::String(const String& rhs) : value(rhs.value) {
+  ++value->refCount;
+}
+String::~String() {
+  if (--value->refCount == 0) delete value; 
+}
+```
+
+实现 operator=，在新增新的 value 之前需要先对先前的 StringValue 进行减一操作。
+
+```cpp
+String& String::operator=(const String& rhs) {
+  if (value == rhs.value) return this;
+
+  if (--value->refCount == 0) delete value;
+
+  value = rhs.value;
+  ++value->refCount;
+
+  return *this;
+}
+```
+
+### Copy-on-Write
+虽然实现了 reference counting，但是随之而来的有些特性需要被替换。这里考虑 operator[]。显
+然当前版本的 operator[] 不能和普通版本一致了，因为当你进行修改时，不应该直接修改共享的内容，
+这回涉及多个对象。当然，const operator[] 限定了只读，所以可以实现和普通版本相同的实现方式。
+
+```cpp
+class String {
+public:
+  const char& operator[] (int index) const { return value->data[index]; }
+  char& operator[] (int index);
+private:
+  struct StringValue {};
+  StringValue* value;
+};
+
+char& String::operator[] (int index) {
+  if (value->refCount > 1) { // 与其他对象共享数据
+    --value->refCount; // 减少引用
+    value = new StringValue(value->data); // 新建对象
+  }
+
+  return value->data[index];
+}
+```
+
+### Pointers, Reference, 以及 Copy-on-Write
+实现写时拷贝几乎同时保留了效率和正确性，但是也存在一个小问题。
+
+```cpp
+String s1 = "Hello";
+char *p = &s1[1];
+String s2(s1);
+*p = 'x';
+```
+
+上述代码显然我们是不期待其成功的，因为这将影响新复制出来的 s2。对于这个问题通常有三个解决方法：
+1. 忽略这个问题
+2. 提供告警
+3. 使用标记
+
+使用标记可以解决这个问题，但是会降低对象之间共享值的个数。基本想法是添加一个 flag 用来表示是
+否可以被共享。对象创建初，flag 设置为 true，但是只要 non-const operator[] 作用于对象值
+身上就立即消除该标签。
+
+```cpp
+class String {
+public:
+private:
+  struct StringValue {
+    int refCount;
+    bool shareable;
+    char* data;
+
+    StringValue(const char* initValue);
+    ~StringValue();
+  };
+
+  StringValue* value;
+};
+
+String::StringValue::StringValue(const char* initValue) : refCount(1), shareable(true) {
+  data = new char[std::strlen(initValue) + 1];
+  std::strcpy(data, initValue);
+}
+
+String::String(const String& rhs) {
+  if (rhs.value->shareable) {
+    value = rhs.value;
+    ++value->refCount;
+  } else {
+    value = new StringValue(rhs.value->data);
+  }
+}
+
+char& String::operator[](int index) {
+  if (value->refCount > 1) {
+    --value->refCount;
+    value = new StringValue(value->data);
+  }
+  value->shareable = false;
+  return value->data[index];
+}
+```
+
+这种方法降低了 StringValue 对象的可共享数量，因为一旦你调用了 operator[]，这个对象的数据就
+不再可以共享了。但是这些事情的前提都是，我们一直是按照写操作的要求来处理读操作的，显然读操作
+不必像写操作这么麻烦。而为了区分这两者，我们需要引入 proxy class 计数才行，这也就意味着可以
+降低 不可共享 的 StringValue 对象。
+
+### 一个 Reference-Counting 基类
+
+
+### 自动操作 reference count
+
+### 把所有努力放在一起
+
+### 将 reference counting 加到既有的 classes 身上
 
 
 ## 条款30：Proxy class (替身类、代理类) (*)
