@@ -1351,9 +1351,81 @@ TODO: 这里还没明白 reference counting 基类怎么使用
 
 ### 将 reference counting 加到既有的 classes 身上
 
-
 ## 条款30：Proxy class (替身类、代理类) (*)
 
+### 实现二维数组
+尽管 c++ 可以实现多维数组，但是并不灵活，比如没有办法生成一个动态变化的数组。因此，这部分希望
+设计一个满足需求的数组。
+
+```cpp
+template <class T>
+class Array2D {
+public:
+  Array2D(int dim1, int dim2);
+}
+```
+
+上面实现了简单的二维数组，但是和普通的二维数组的使用上可能有冲突。比如我们可能希望通过使用方括
+号来表现数组索引。
+
+```cpp
+Array2D<int>* data = new Array2D<int>(10, 20);
+cout << data[3][6];
+```
+
+可能你首先想到的是重载运算符 operator[][]。但是，实际上这并不可能实现，因为根本不存在 operator[][]。
+又或者，你可能退而求其次，使用 operator() 来实现。
+
+```cpp
+template <class T>
+class Array2D {
+public:
+  T& operator()(int index1, int index2);
+  const T& operator()(int index1, int index2) const;
+};
+
+cout << data(3, 6)
+```
+
+但是这又类似函数方式了，而不像数据访问操作。我们实际上可以对 Array2D 进行修改，并不直接创建
+二维数组，而是创建10个一维数组，并在一维数组中创建包含20个元素的一维数组。
+
+```cpp
+template <class T>
+class Array2D {
+public:
+  class Array1D {
+  public:
+    T& operator[](int index);
+    const T& operator[] (int index) const;
+  }
+
+  Array1D& operator[](int index);
+  const Array1D& operator[](int index) const;
+};
+
+cout << data[3][6];
+```
+
+其中的 Array1D 对象象征一个一维数组，对于 Array2D 的用户而言，它可以完全被忽略，这种对象被
+称为 proxy objects，而用以表现 proxy objects 的称为 proxy class。
+
+### 区分 operator[] 的读写动作
+proxy class 不仅能够实现类似多维数组这样的操作，它还具有其他弹性，比如在 条款5 中所写的那样，
+来防止不受欢迎的 类型转换。另外就是实现 条款29 所提及的区分 operator[] 读写动作了。
+
+这里需要先从概念上区分 operator[] 的读写动作。读动作实际上是进行 **右值运用**，它意味着不能
+修改。而写动作则是 **左值运用**，它意味着可被修改。
+
+```cpp
+class String {
+public:
+  class CharProxy {
+  public:
+    C
+  }
+}
+```
 
 ## 条款31：让函数根据一个以上的对象类型来决定如何虚化 (*)
 
