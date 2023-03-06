@@ -1,6 +1,11 @@
 # 定制的 new 和 delete
 
 ## 条款49: 了解 new-handleer 的行为
+---
+- set_new_handler 允许客户指定一个函数，在内存分配无法获得满足时被调用。
+- Nothrow new 是一个颇为局限的工具，因为它只适用于内存分配；后继的构造函数调用还是可能抛出异常。
+---
+
 当 operator new 无法满足某一内存分配需求时，它会抛出异常。对于旧式操作，该行为会返回一个 null 
 指针。我们可以通过修改错误处理函数来改变这种默认行为，从而获得旧式操作体验。
 
@@ -125,6 +130,10 @@ if (pw2 == 0) ... // 可能成功
 出异常仍然会传播。
 
 ## 条款50: 了解 new 和 delete 的合理替换时机
+---
+- 有许多理由需要写个自定的 new 和 delete，包括改善效能、对 heap 运用错误进行调试、收集 heap 使用信息
+---
+
 为什么会想要替换编译器提供的 operator new 或者 operator delete？
 - 用来检测运用上的错误。
 - 为了强化效能。
@@ -170,6 +179,11 @@ void* operator new(std::size_t size) throw (std::bad_alloc) {
 - 为了获得非传统行为。
 
 ## 条款51: 编写 new 和 delete 时需要固守常规
+---
+- operator new 应该内含一个无穷循环，并在其中尝试分配内存，如果它无法满足内存需求，就该调用 new-handler。它在应该有能力处理 0 bytes 申请。Class 专属版本则还应该处理 “比正确大小更大的申请”。
+- operator delete 应该在收到 null 指针时不做任何事。Class 专属版本则还应该处理 “比正确大小更大的申请”。
+---
+
 编写自己的 operator new 和 operator delete 时应该遵守哪些规矩。
 
 ### operator new
@@ -248,6 +262,11 @@ void* Base::operator delete(void* rawMemory, std::size_t size) throw() {
 operator delete 的 size_t 数值可能不正确。
 
 ## 条款52: 写了 placement new 也要写 placement delete
+---
+- 当你写一个 placement operator new，请确定也写出了对应的 placement operator delete。如果没有这样做，你的程序可能会发生时断时续的内存泄露。
+- 当你声明 placement new 和 placement delet，请确定不要无疑是的遮掩他们的正常版本。
+---
+
 new operator 总是分为两步进行的，首先调用 operator new 进行空间申请，而第二步则是执行 constructor。
 如果后者出错，那么 operator new 所分配的地址空间应该怎样做？答案必然是被释放以防止内存泄露。
 但是有个问题，就是编译器怎么找到对应的 operator delete 呢？

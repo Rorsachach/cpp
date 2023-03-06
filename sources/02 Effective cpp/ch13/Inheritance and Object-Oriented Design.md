@@ -1,6 +1,10 @@
 # 继承和面向对象设计
 
-## 条款32: 确定你的 public 继承塑膜出 is-a 关系
+## 条款32: 确定你的 public 继承塑膜出 is-a 关系、
+---
+- public 继承意味着 is-a。适用于 base classes 身上的每一件事情一定也适用于 derived class 身上，因为每一个 derived class 对象也都是一个 base class 对象。
+---
+
 以 c++ 进行面向对象编程，最重要的一个规则是: public inheritance 意味着 is-a 的关系。也就
 是说，当你令 class D public inheritance class B 时，D 的对象也是一个 B 的对象，但是 B 
 的对象不一定是个 D 的对象。
@@ -76,6 +80,10 @@ is-a 并非唯一的 classes 之间的关系，除此之外还有 has-a 和 is-i
 两种关系。需要了解这些 class 相互关系之间的差异，才能设计好的继承类型。
 
 ## 条款33: 避免遮掩继承而来的名称
+---
+- derived classes 内的名称会遮掩 base classes 内的名称。在 public 继承下从来没有人希望如此。
+- 为了让遮掩的名称再见天日，可使用 using 声明式或转交函数。
+---
 
 这个条款主要用来解释作用域的相关内容。
 
@@ -192,6 +200,13 @@ public:
 这样做既不会像 using 那样将所有名称完全暴露，又能继承部分的函数。
 
 ## 条款34: 区分接口继承和实现继承
+---
+- 接口继承和实现继承不同。在 public 继承之下，derived class 总是继承 base class 的接口。
+- pure virtual 函数只具体指定接口继承。
+- 简朴的 impure virtual 函数具体指定接口继承和缺省实现继承
+- non-virtual 函数具体指定接口继承以及强制性实现继承。
+---
+
 在 public 继承概念的基础上，可以发现它还由两部分组成: 函数接口继承 和 函数实现继承。身为 class 
 的设计者有时你会希望 derived class：1. 只继承函数接口，2. 同时继承接口和实现，但是希望能够
 覆写，3. 同时继承接口和实现，并且不允许覆写。
@@ -327,6 +342,11 @@ class 如果打算被用来当作一个 base class，它就会拥有若干个 vi
 新定义，那么你应该将这些函数声明为 non-virtual。
 
 ## 条款35: 考虑 virtual 函数以外的其他选择
+---
+- virtual 函数的替代方案包括 NVI 手法以及 Strategy 涉及模式的多种形式。NVI 手法自身一个特殊形式的 Template Method 设计模式。
+- 将机能从成员函数转移到 class 外部函数，带来的一个缺点是，非成员函数无法访问 class 的 non-public 成员。
+- tr1::function 对象的行为就像一般函数指针。这样的对象可接纳 “与给定之目标签名式兼容” 的所有可调用物。
+---
 
 ```cpp
 class GameCharacter {
@@ -490,6 +510,10 @@ private:
 后续需要更更多的人物，以及生命值计算方法，只需要在这两个类的基础上进行继承就可以了。
 
 ## 条款36: 绝不重新定义继承而来的 non-virtual 函数
+---
+- 绝对不要重新定义继承而来的 non-virtual 函数。
+---
+
 加入存在下面的继承关系:
 
 ```cpp
@@ -519,6 +543,10 @@ pd->mf();
 - 如果 D 需要 public 继承 B，并且 D 需要实现不同的 mf，那么就应该使用 virtual 函数，而不应该反映出 “不变性凌驾特异性” 的性质
 
 ## 条款37: 绝不重新定义继承而来的缺省参数值
+---
+- 绝对不要重新定义一个继承而来的缺省参数值，因为缺省参数值都是静态绑定，而 virtual 函数——你唯一可以覆写的东西——确实动态绑定。
+---
+
 这条条款的范围可以缩小，因为条款36已经讨论了不应该重新定义 non-virtual 函数，那实际上这里强
 调的就是 继承带有缺省数值的 virtual 函数。
 
@@ -581,6 +609,11 @@ private:
 ```
 
 ## 条款38: 通过复合塑模出 has-a 或 “根据某物实现出”
+---
+- 复合的意义和 public 继承完全不同。
+- 在应用域，复合意味着 has-a。在实现域，复合意味 has-a。在实现域，复合意味着 is-implemented-in-terms-of。
+---
+
 复合关系是类型之间的一种关系，当某种类型的对象内含其他类型对象，就是这种关系。
 
 复合关系也和 public 继承一样具有现实意义，它主要包括两种:
@@ -638,6 +671,11 @@ private:
 ```
 
 ## 条款39: 明智而审慎的使用 private 继承
+---
+- private 继承意味着 is-implemented-in-terms of。它通常比复合级别耕地。但是当 derived class 需要访问 protected base class 的成员，或者需要重新定义继承而来的 virtual 函数时，这么设计是合理的。
+- 和复合不同，private 继承可以造成 empty base 最优化。这对致力于 “对象尺寸最小化” 的程序开发者而言，可能很重要。
+---
+
 private 继承有两条规则:
 1. private 继承关系，编译器不会自动将一个 derived class 对象转换为 base class。
 2. private 继承将从 base class 继承而来的所有成员在 derived class 中变成 private 属性。
@@ -723,6 +761,11 @@ private:
 继承和复合技术来替代这个过程，尽管有更高的复杂度。
 
 ## 条款40: 明智而审慎的使用多重继承
+---
+- 多重继承比单一继承更复杂。它可能导致新的歧义性，以及对 virtual 继承的需要。
+- virtual 继承会增加大小、速度、初始化复杂度等等成本。如果 virtual base class 不带任何数据，僵尸最具实用价值的情况。
+- 多重继承的确有正当用途。其中一个情节涉及 “public 继承某个 interface class” 和 “private 继承某个协助实现的 class” 的两相组合。
+---
 
 ### 语义歧义
 当涉及多重继承，程序可能从一个以上的 base classes 继承相同的名称，这会导致歧义。
