@@ -29,7 +29,7 @@
 
 ---
 ### 连接建立
-![image](G:\cpp(git上所传文件图片)\110022.jpg)
+![image](https://github.com/liuyiming499/picture/blob/main/110022.jpg)
 
 
 - 服务器端的链接从接收到syn开始，到time_wait结束。其中包含两个队列，半连接与全连接队列。
@@ -39,7 +39,7 @@
 
 
 同时建立
-![image](G:\cpp(git上所传文件图片)\110024.png)
+![image](https://github.com/liuyiming499/picture/blob/main/110024.png)
 ---
 ### 传输过程  
 
@@ -53,9 +53,9 @@
 ---
   
 ### 断开过程
-![image](G:\cpp(git上所传文件图片)\110026.png)
+![image](https://github.com/liuyiming499/picture/blob/main/110026.png)
 - 服务器收到客户端的fin包后可能也有数据需要传输，等待传输完毕再发出fin包所以共计四次交互。
 - wait2MSL原因：1.wait原因：服务器的fin+ack包可能重传；2.wait2MSL原因：使本阶段报文消失，保证下一阶段没有旧包的干扰。
 
 同时关闭
-![image](G:\cpp(git上所传文件图片)\110023.png)
+![image](https://github.com/liuyiming499/picture/blob/main/110023.png)
