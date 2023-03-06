@@ -37,13 +37,12 @@
 - 一台主机同时tcp：listen(8888)，udp：recvfrom(8888)可以同时使用，因为五元组的协议不同。
 - 一方bind(9999)connect(8888),另一方bind(8888)connect(9999)，可实现tcp的p2p，两方客户端的通信。    
 
-
 同时建立
 ![image](https://github.com/liuyiming499/picture/blob/main/110024.png)
 ---
 ### 传输过程  
 
-- 使用延迟ack保证tcp包的有序性
+- 使用延迟ack保证tcp包有序性
 - 重传  
   *RTT（Round Trip Time）：往返时延，也就是数据包从发出去到收到对应 ACK 的时间。*  
   *RTO（Retransmission Time Out）：重传超时，超时时间。*    
