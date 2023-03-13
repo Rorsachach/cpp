@@ -1,6 +1,11 @@
 # 模板与泛型编程
 
 ## 条款41: 了解隐式接口和编译期多态
+---
+- classes 和 templates 都支持接口和多态
+- 对 classes 而言接口是显式的，以函数签名为中心。多态则是通过 virtual 函数发生于运行期。
+- 对 template 参数而言，接口是隐式的，奠基于有效表达式。多态则是通过 template 具现化和函数重载解析发生于编译期。
+---
 **面向对象编程世界**总是以显式接口和运行期多态解决问题。
 
 ```cpp
@@ -43,6 +48,10 @@ void doProcessing(T& w) {
 - 所有涉及到 w 的任何调用都有可能让 template 具象化，这种行为发生在编译期，会导致编译期多态。
 
 ## 条款42: 了解 typename 的双重意义
+---
+- 声明 template 参数时，前缀关键字 class 和 typename 可互换。
+- 请使用关键字 typename 标识嵌套从属类型名称，但不得在 base class lists 和 member initialization list 内用它作为 base class 修饰符。
+---
 
 ```cpp
 template<class T> class Widget;
@@ -126,6 +135,10 @@ void workWithIterator(IterT iter) {
 ```
 
 ## 条款43: 学习处理模板化基类内名称
+---
+- 可在 derived class templates 内通过 “this->” 指涉 base class templates 内的成员名称，或借由一个明白写出的 "base class 资格修饰符" 完成。
+---
+
 如果编译期我们有足够的信息来决定哪些信息会如何处理，就可以采用基于 template 的方法。下面是一
 个例子：
 
@@ -155,11 +168,165 @@ public:
 }
 ```
 
-TODO: 
+在上面这段代码的基础上，如果还需要扩展功能，例如每次送出信息时都进行日志，则很容易在该代码上进
+行扩充。
+
+```cpp
+template<typename Company>
+class LoggingMsgSender : public MsgSender<Company> {
+public:
+  void sendClearMsg(const MsgInfo& info) {
+    // 传送前写 log
+    sendClear(info); // 无法通过编译
+    // 传送后写 log
+  }
+};
+```
+
+虽然这样写非常合理，但是 sendClear 无法通过编译。因为在编译期，编译器并不清楚继承的 MsgSender<Company> 
+中 Company 是 CompanyA 还是 CompanyB。
+
+另一个问题在于，如果进行了全特化，那这类继承又会产生错误。例如，CompanyZ 只能发送加密数据，于
+是设计 特化版 的 MsgSender。
+
+```cpp
+template <>
+class MsgSender<CompanyZ> { // 删除了 sendClear 方法，添加了 sendSecret 方法
+public:
+  void sendSecret(const MsgInfo& info) {}
+};
+```
+
+在具有全特化的情况下，再次考察 LoggingMsgSender 类，你会发现如果传入 CompanyZ，那么上面这
+段代码注定失败，因为 MsgSender<CompanyZ> 不具备 sendClear 方法。这也是为什么编译器不允许
+上述代码通过编译的原因。
+
+为了编译成功，可以使用下列手段。
+
+```cpp
+template<typename Company>
+class LoggingMsgSender : public MsgSender<Company> {
+public:
+  void sendClearMsg(const MsgInfo& info) {
+    // 传送前写 log
+    this->sendClear(info); // 假设 sendClear 被继承，这就会成功通过编译
+    // 传送后写 log
+  }
+};
+```
+
+```cpp
+template<typename Company>
+class LoggingMsgSender : public MsgSender<Company> {
+public:
+  using MsgSender<Company>::sendClear;
+  void sendClearMsg(const MsgInfo& info) {
+    // 传送前写 log
+    sendClear(info); // 可以通过，直接告诉编译器我们要调用的函数，而不让编译器自己去 base class 中寻找
+    // 传送后写 log
+  }
+};
+```
+
+```cpp
+template<typename Company>
+class LoggingMsgSender : public MsgSender<Company> {
+public:
+  void sendClearMsg(const MsgInfo& info) {
+    // 传送前写 log
+    MsgSender<Company>::sendClear(info); // 可以通过
+    // 传送后写 log
+  }
+};
+```
+
+第三种实现方式通常是最不恰当的实现方式，因为如果被 virtual 修饰，以明确的名称调用会关闭 “virtual 
+绑定行为”。
+
+上述这三种方法实际上都是 对编译器承诺 “base class template 的任何特化版本都将支持其泛化版本
+所提供的接口”。但是面对 CampanyZ 这种违背承诺的行为，编译器仍会编译失败。
 
 ## 条款44: 将与参数无关的代码抽离 templates
+---
+- templates 生成多个 classes 和 多个函数，所以任何 template 代码都不应该于某个造成膨胀的 template 参数产生相依关系。
+- 因非类型模板参数而造成的代码膨胀，往往可以消除，做法是以函数参数或 class 成员变量替换 template 参数。
+- 因类型参数而造成的代码膨胀，往往可降低，做法是让带有完全相同二进制表述的具现类型共享实现码。
+---
+
+尽管 template 可以节省时间且避免代码重复，但是有时候也可能会导致代码膨胀。想要防止这种问题，
+可以进行共性与变性分析。
+
+在编写 template 时，也要进行重复代码的判断，这种判断并不像 non-template 这样明确。
+
+```cpp
+template<typename T, std::size_t n>
+class SquareMatrix {
+public:
+  void insert();
+};
+
+SquareMatrix<double, 5> sm1;
+sm1.insert();
+SquareMatrix<double, 10> sm2;
+sm2.insert();
+```
+
+上面这段代码便是存在重复，对于常量 5 和 10 来说，实际只需要一个传入参数的函数来实现即可。
+
+```cpp
+template<typename T>
+class SquareMatrixBase {
+protected:
+  void insert(std::size_t matrixSize);
+};
+
+template<typename T, std::size_t n>
+class SquareMatrix : private SquareMatrixBase<T> {
+private:
+  using SquareMatrixBase<T>::insert;
+public:
+  void insert() { this->insert(n); };
+};
+```
+
+使用这种结构进行设计可以尽量避免 derived classes 代码重复。这里使用 this->insert(n) 是为
+了解决 模板化基类内的函数名称会被 derived class 掩盖的问题。但是上述结构仍然具有一些棘手的
+问题而没有解决。那就是 SquareMatrixBase 如何修改矩阵数据呢？这部分内容只有 derived class 
+知道。
+
+一个办法是，为 SquareMatrixBase::insert 添加新的指针参数，但是如果有其他函数你也要这样做。
+另外一种办法是在 SquareMatrixBase 存储一个指针，指针指向矩阵所在的内存。
+
+```cpp
+template<typename T>
+class SquareMatrixBase {
+protected:
+  SquareMatrixBase(std::size_t n, T* pMem) : size(n), pData(pMem) {}
+  void setDataPtr(T* ptr) { pData = ptr; }
+  void insert(std::size_t matrixSize);
+private:
+  std::size_t size;
+  T* pData;
+};
+
+template<typename T, std::size_t n>
+class SquareMatrix : private SquareMatrixBase<T> {
+private:
+  using SquareMatrixBase<T>::insert;
+public:
+  SquareMatrix() : SquareMatrixBase<T>(n, data) {}
+  void insert() { this->insert(n); }
+private:
+  T data[n * n];
+};
+```
 
 ## 条款45: 运用成员函数模板接受所有兼容类型
+---
+- 请使用 member function templates 生成 “可接受所有兼容类型” 的函数。
+- 如果你声明 member template 用于“泛化 copy 构造”或者 “泛化 assignment 操作”，你还是需要声明正常的 copy 构造函数和 copy assignment 操作符。
+---
+
 在使用指针时，推荐使用智能指针，它能保障自动删除 heap-based 资源。但是有时候，智能指针并不会
 像真实指针那样完成工作，例如 ++ 操作。因为真实指针支持隐式转换，特别是 derived class 转换为 
 base class。
@@ -231,6 +398,10 @@ private:
 的 copy 构造函数。
 
 ## 条款46: 需要类型转换时请为模板定义非成员函数
+---
+- 当我们编写一个 class template，而它所提供之 “与此 template 相关的” 函数支持 “所有参数之隐式类型转换” 时，请将那些函数定义为 “class template 内部的 friend 函数”。
+---
+
 在条款24中讨论了为什么只有 non-member 函数才有能力 在所有实参身上实施隐式类型转换。但是在模
 板化过程中，条款24似乎就不再适用了。
 
@@ -311,6 +482,10 @@ public:
 式调用了，那也就无需担心 doMultiply 是否支持混合式乘法的问题了。
 
 ## 条款47: 请用 traits classes 表现类型信息
+---
+- traits classes 使得 “类型相关信息” 在编译期可用。它们以 templates 和 “template 特化” 来实现。
+- 整合重载技术后，traits classes 有可能在编译期对类型执行 if else 测试
+---
 使用 traits class 是一种非常常见的手段，以 STL 中的 工具性 templates——advance 为例。
 
 ```cpp
@@ -425,6 +600,11 @@ Traits 广泛用于标注程序库。包括 iterator_traits，它不仅提供了
 及 numeric_limits 用来保存数值类型的相关信息。
 
 ## 条款48: 认识 template 元编程
+---
+- TMP 可将工作由运行期移往编译期，因而得以实现早期错误侦测和更高的执行效率。
+- TMP 可被用来生成 “基于政策选择组合” 的客户定制代码，也可用来避免生成对某些特殊类型并不适合的代码。
+---
+
 模板元编程 (Template metaprogramming, TMP) 是编写 template-based c++ 程序并执行于编译
 期的过程。它是以 c++ 写成、执行于 c++ 编译器内的程序。
 
