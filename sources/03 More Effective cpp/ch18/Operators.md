@@ -68,6 +68,67 @@ std::cout << r.asDouble() // 期待打印 0.333333
 ```
 
 #### b. 单自变量 constructors
+通过单自变量的 constructor 完成的隐式转换是很难消除的。
+
+```cpp
+template<class T>
+class Array {
+public:
+  Array(int lowBound, int highBound);
+  Array(int size);
+
+  T& operator[] (int index);
+};
+
+bool operator==(const Array<int>& lhs, const Array<int>& rhs);
+
+Array<int> a(10);
+Array<int> b(10);
+for (int i = 0; i < 10; ++i) {
+  if (a == b[i]) { } // 这里写错了，所以会造成额外的问题。
+  else { }
+}
+```
+
+上述代码的一个由于写错，所以产生了一个意想不到的问题。我们撰写这段代码的本意是，如果 a[i] == b[i] 
+成立，就做一些事。然而由于写成了 a，于是编译器为我们选择了我们上面写的这段 operator==。首先，
+a 可以匹配 const Array<int>& lhs，那 b[i] 如何匹配后者呢？通过隐式类型转换，编译器通过 Array(int size) 
+的构造方法，将 b[i] 传入构造出一个临时对象，这样就匹配成功了。
+
+为了拒绝这种事情的发生，使用 explicit 关键词，来要求该构造函数必须显式使用。
+
+```cpp
+template<class T>
+class Array {
+public:
+  explicit Array(int size);
+};
+if (a == b[i]) // 非法行为
+if (a == Array<int>(b[i])) // 合法行为，但是逻辑错误
+if (a == static_cast<Array<int>>(b[i])) // 合法，同样逻辑错误
+if (a == (Array<int>)b[i]) // 合法，但是逻辑错误
+```
+
+如果你的编译器还不支持 explicit 关键字，那么你可以使用 proxy class 这种方案进行：
+```cpp
+template<class T>
+class Array {
+public:
+  class ArraySize {
+  public:
+    ArraySize(int num) : theSize(num) {}
+    int size() const { return theSize; }
+  private:
+    int theSize;
+  }
+  explicit Array(ArraySize size);
+};
+
+if (a == b[i]) // 非法
+```
+
+这种类型转换是不能成功的，因为 num 需要首先隐式转换为 Array::ArraySize，然后再由 ArraySize 
+转换为 Array。这种连续多次转换的行为是被编译器禁止的。
 
 ## 条款6：区别 increment/decrement 操作符的 前置 和 后置 形式
 为了区分 ++/-- 的前置形式和后置形式，重载函数以参数类型来区分彼此。
