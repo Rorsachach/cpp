@@ -1,3 +1,7 @@
 cpp.code-workspace
 .idea/
+<<<<<<< HEAD
 .vscode/
+=======
+test/
+>>>>>>> bfadfc1af7cc4140533ef567efd815ca1aa3d19c

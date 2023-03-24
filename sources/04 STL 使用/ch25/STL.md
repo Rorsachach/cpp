@@ -179,8 +179,160 @@ stack, queue 等等)
 - 随机访问迭代器: vector、deque、string
 
 ## 4. 算法
+STL 提供了一些标准算法，包括搜寻、排序、拷贝、重新排序、修改、数值运算等。算法是一种搭配迭代器
+使用的全局函数，这样做的好处是，一份代码适用于多种容器。
+
+一些算法使用示例
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <random>
+
+int main() {
+  std::vector<int> coll;
+  for (int i = 0; i < 10; ++i) {
+    coll.push_back(std::rand() % 100);
+  }
+
+  std::cout << "coll is: ";
+  for (int a : coll) {
+    std::cout << a << " ";
+  }
+  std::cout << std::endl;
+
+  std::vector<int>::iterator it;
+  it = std::max_element(coll.begin(), coll.end());
+  std::cout << "max element of coll is: " << *it << std::endl;
+  it = std::min_element(coll.begin(), coll.end());
+  std::cout << "min element of coll is: " << *it << std::endl;
+
+  std::sort(coll.begin(), coll.end());
+  std::cout << "sorted coll is: ";
+  for (int a : coll) {
+    std::cout << a << " ";
+  }
+  std::cout << std::endl;
+
+  while ((it = std::find(coll.begin(), coll.end(), std::rand() % 100)) == coll.end());
+  std::cout << "coll[" << std::distance(coll.begin(), it) << "] is " << *it << std::endl;
+
+  std::reverse(it, coll.end());
+  std::cout << "reversed coll (from [" << std::distance(coll.begin(), it) << "] to end) is: ";
+  for (int a : coll) {
+    std::cout << a << " ";
+  }
+  std::cout << std::endl;
+}
+```
 
 ## 5. 迭代器之适配器
+迭代器是一个抽象概念，任何东西只要其行为类似迭代器，它就是一个迭代器。你可以自己撰写一些类别，
+具备迭代器接口，但实现不同的行为。STL 提供了数个预先定义的特殊迭代器，就是所谓的 iterator 
+adapter。
+
+### insert iterator 插入型迭代器
+insert ierator 可以允许算法按照 插入 而非 覆盖 的方式进行。使用这个迭代器可以解决算法的 “目
+标空间不足” 问题。
+- 对某个元素设值: insert 而非 overwrite
+- 单步前进：不造成任何影响
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <list>
+#include <deque>
+#include <set>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+  list<int> coll1;
+  for (int i = 0; i < 9; ++i) {
+    coll1.push_back(i);
+  }
+
+  vector<int> coll2;
+  copy(coll1.begin(), coll1.end(), back_inserter(coll2));
+
+  deque<int> coll3;
+  copy(coll1.begin(), coll1.begin(), front_inserter(coll3));
+
+  set<int> coll4;
+  copy(coll1.begin(), coll1.end(), inserter(coll4, coll4.begin()));
+}
+```
+
+上述代码中使用了三种不同的 insert iterator
+1. back_inserter(): 内部调用 push_back()，实现尾部插入。只适用于 vector, deque, list
+2. front_inserter(): 内部调用 push_front()，实现头部插入。只适用于 deque, list
+3. inserter(): 内部调用 insert()，在第二个参数位置进行插入。适用于所有，包括关联式容器。
+
+注意这里使用的是函数，这些函数会分别返回 back_insert_iterator<Collection>, front_insert_iterator<Collection>,
+insert_iterator<Collection>。
+
+### stream iterator 流迭代器
+这是一种用来读写 stream 的迭代器。
+
+- istream_iterator<T>: 输入流迭代器
+- ostream_iterator<T>: 输出流迭代器
+
+注意：这里的 迭代器 与前面提到的 back_inserter() 等不同，前面的是函数，会返回一个迭代器。而
+这里的就是迭代器对象。
+
+```cpp
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <string>
+#include <iterator>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+  vector<string> coll;
+  ifstream ifile;
+  ifile.open("./build/ch25/test.txt");
+
+  istream_iterator<string> beg(ifile);
+  istream_iterator<string> end;
+
+  copy(beg, end, back_inserter(coll));
+
+  sort(coll.begin(), coll.end());
+
+  unique_copy(coll.begin(), coll.end(), 
+    ostream_iterator<string>(cout, "\n"));
+}
+```
+
+### reverse iterator 逆向迭代器
+这种迭代器是将操作方式逆向进行，将 increment 转换为 decrement。所有容器可以透过成员函数 
+rbegin() 和 rend() 来产生。
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <iterator>
+
+using namespace std;
+
+int main() {
+  vector<int> coll;
+
+  for (int i=0; i <= 9; ++i) {
+    coll.push_back(i);
+  }
+
+  copy(coll.rbegin(), coll.rend(), 
+      ostream_iterator<int>(cout, " "));
+  cout << endl;
+}
+```
 
 ## 6. 更易型算法
 
